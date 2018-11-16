@@ -25,7 +25,7 @@ use of some static benchmark would miss.
 
 Detecting regressions with "old" bytecode and benchmarks is of course also important, but operationally 
 we will likely be using benchmarks produced by an older version of the OpenJDK (or from
-jmh-jdk-microbenchmarks) in tandem with a "fresh" benchmarks built using the version under test. 
+jmh-jdk-microbenchmarks) in tandem with benchmarks built fresh from the JDK under test. 
 
 Technical arguments aside: my main motivation for moving forward with all this is my hope that it will make adding 
 relevant microbenchmarks as natural tomorrow as adding functional regression tests are today.
