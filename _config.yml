@@ -1,15 +1,15 @@
 title: Claes Redestad's blog
-author: cl4es
-email: claes.redestad@gmail.com
+author: Claes Redestad 
 description:
   A blog about Java, OpenJDK and various performance related adventures thereabout.
 
 # social links
 twitter_username: cl4es
 github_username:  cl4es
+google_analytics: UA-129318598-1
 
-show_excerpts: false # set to true to show excerpts on the homepage
-
+show_excerpts: false
+baseurl: ""
 # Minima date format
 # refer to http://shopify.github.io/liquid/filters/date/ if you want to customize this
 minima:

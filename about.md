@@ -4,4 +4,4 @@ title: About
 permalink: /about/
 ---
 
-Claes Redestad works on OpenJDK @ Oracle
+I work on OpenJDK @ Oracle - mostly benchmarking, performance analysis and a few optimizations.
