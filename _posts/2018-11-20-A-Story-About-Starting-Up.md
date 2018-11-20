@@ -47,7 +47,7 @@ Some time during the this time people noticed that the bootstrap overheads of la
 
 Except for a few tiny improvements, I didn't make much early progress on making lambdas bootstrap faster. Instead I got pulled into the [Jigsaw project](https://openjdk.java.net/projects/jigsaw/).
 
-Jigsaw had been going on for a while, and the current of it was - dare I say - slow to start. Running hello world could take upwards of 400ms on my workstation, compared to the 100ms startup times of JDK 8 on the same machine. Ouch!
+Jigsaw had been going on for a while, and the current builds were - dare I say it - _slow_. Running hello world could take upwards of 400ms on my workstation, compared to the ~100ms startup times of JDK 8 on the same machine. Ouch!
 
 Alas, everything is connected. 
 
