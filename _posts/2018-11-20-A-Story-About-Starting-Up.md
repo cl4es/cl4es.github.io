@@ -41,13 +41,13 @@ Still, most of the things I did was small micro-optimizations, and as such was m
 
 Yes, I knew most improvements I'd done so far are insignificant in isolation. But also that it's the eventual accumulation of improvements (or regressions) that make or break a product. So I ignored the negativity and kept finding myself small things to work on as side projects, hoping that it'd eventually add up.
 
-Some time during the this time people noticed that the bootstrap overheads of lambdas was non-trivial. Aleksey Shipilëv filed a [bug](https://bugs.openjdk.java.net/browse/JDK-8086045) that was bounced around for a bit before finally ending up on my desk. I guess I was becoming _that guy_...
+Some time during all this people noticed that the bootstrap overheads of lambdas was non-trivial. Aleksey Shipilëv filed a [bug](https://bugs.openjdk.java.net/browse/JDK-8086045) that was bounced around for a bit before finally ending up on my desk. I guess I was becoming _that guy_...
 
 ### 2016: Jigsaw is coming.
 
 Except for a few tiny improvements, I didn't make much early progress on making lambdas bootstrap faster. Instead I got pulled into the [Jigsaw project](https://openjdk.java.net/projects/jigsaw/).
 
-Jigsaw had been going on for a while, and the current builds were - dare I say it - _slow_. Running hello world could take upwards of 400ms on my workstation, compared to the ~100ms startup times of JDK 8 on the same machine. Ouch!
+Jigsaw had been going on for a while, and the current builds were - dare I say it - _slow_. Running Hello World could take upwards of 400ms on my workstation, compared to the ~100ms startup times of JDK 8 on the same machine. Ouch!
 
 Alas, everything is connected. 
 
