@@ -83,10 +83,10 @@ This became a good talking point for another JVMLS talk, in which I tried to out
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/3r_tHGtpU7A" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-I guess I've delivered on some of the ideas I discussed in that talk, but I've also gone off in entirely different directions, and learnt new things that has shed light on some things. And for every thing you improve, at least two new challenges appears.
+I guess I've delivered on some of the ideas I discussed in that talk, but I've also gone off in entirely different directions. And of course: for every thing you fix, at least two new challenges appears.
 
 Most recently I finished up a number of optimizations targetting startup overheads of ISC, including some MethodHandle API performance improvements that improves setup costs (number of classes generated etc) of certain shapes. JDK 12 will need about half the amount of time and resources to bootstrap ISC callsites compared to JDK 11, while retaining peak performance characteristics.
 
 Overall things are set to be quite a bit snappier. And I seem to keep finding things to do and learn about. Great, huh?
 
-I intend to blog more in-depth about a few of the things outlined above in the weeks to come. Some of it might actually be, uh, interesting.
+I intend to blog more in-depth about a few of the things outlined above in the weeks to come. Some of it might even get interesting.
