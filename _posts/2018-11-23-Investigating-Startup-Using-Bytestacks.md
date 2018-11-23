@@ -59,7 +59,7 @@ As you might guess: yes, this logs every bytecode that the JVM interprets for th
 
 But that gets old fast. 
 
-What bytestacks parse this output, builds up the call stacks, then keeps a running score on how often we execute a bytecode for each unique stack. Let's try it!
+What bytestacks does is parse this output, build up the call stacks, then keeps a running score on how often we execute a bytecode for each unique stack. Let's try it!
 
 ```
 # setup
