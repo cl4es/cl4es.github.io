@@ -25,14 +25,14 @@ Your system might need some other preparations, so I'll refer to the official bu
 
 ### Finding something to investigate
 
-Let's begin with some simple program we'd like to optimized. I'm tired of looking at a standard Hello World, so let's spice it up a notch:
+Let's begin with some simple program we'd like to start a bit faster. I tire of looking at the standard "Hello World!", so let's spice it up a notch:
 
 ```java
 import java.util.stream.*;
 
 public class HelloJoin {
   public static void main(String... args) {
-    System.out.println("Arguments:");
+    System.out.println("Your arguments:");
     System.out.println(Stream.of(args).collect(Collectors.joining(", ")));
   }
 }
@@ -45,7 +45,7 @@ $JAVA_HOME/bin/javac HelloJoin.java
 $JAVA_HOME/bin/java -XX:+TraceBytecodes HelloJoin > hellojoin.base
 ```
 
-This takes a few seconds on even the smallest programs, so be patient if you're attempting it on something *real*.
+This takes a few seconds on even the smallest programs, so be patient if you're attempting it on something... *real*.
 
 If you open `hellojoin.base` you'd see there's _a lot_ of output, and it always starts with something like this:
 
