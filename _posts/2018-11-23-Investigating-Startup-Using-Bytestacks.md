@@ -10,7 +10,7 @@ In my [previous](https://cl4es.github.io/2018/11/20/A-Story-About-Starting-Up.ht
 
 ### Getting started
 
-Bytestacks is a tiny tool to parse the output of `-XX:+TraceBytecodes` into a format which can be consumed by Brendan Gregg's excellent [FlameGraph](https://github.com/brendangregg/FlameGraph) tool, and then some minimal script wrapping to tie it all together. 
+Bytestacks is a tiny tool I wrote to parse the output of `-XX:+TraceBytecodes` into a format which can be consumed by Brendan Gregg's excellent [FlameGraph](https://github.com/brendangregg/FlameGraph) tool, along with some minimal script wrapping to tie it all together. 
 
 To use it I'll need a debug build of the JDK. For this demonstration I want to try optimizing something in the JDK, so I'll build my own:
 
@@ -62,19 +62,23 @@ But that gets old fast.
 What bytestacks parse this output, builds up the call stacks, then keeps a running score on how often we execute a bytecode for each unique stack. Let's try it!
 
 ```
+# setup
 git clone https://github.com/cl4es/bytestacks.git
+(cd bytestacks; ./gradlew build)
+
+# run
 ./bytestacks/bytestacks hellojoin.base
 ```
 
-This generates two files: `hellojoin.base.stacks` (which is the transformation from the raw bytecodes log to a stack format, usable by the various FlameGraph tools), and [hellojoin.base.svg](/images/hellojoin.base.svg):
+Running the above generates two files: `hellojoin.base.stacks` (which is the result of transforming from the raw bytecodes log to a stack format; this is usable as input to the various FlameGraph tools), and the resulting flame graph SVG image, `hellojoin.base.svg`:
 
 [<img src="/images/hellojoin.base.svg" alt="FlameGraph of running HelloJoin" />](/images/hellojoin.base.svg)
 
-(Open the image in a separate tab to interact and zoom in on things...)
+(Open the image in a separate tab to interact, search for and zoom in on things...)
 
-A lot of stuff can be discerned from a flame graph like this, but it can easily get a bit overwhelming if you don't know what to look for. So let's zoom in on the obvious heavy hitters.
+A lot of stuff can be discerned from a flame graph like this, but it can easily get a bit overwhelming. So let's zoom in on one of the obvious heavy hitters.
 
-One such thing is the call to `Collectors.joining()` which sits at `302,783` samples - or rather: executed bytecodes. Bytestacks doesn't attempt to weight different bytecodes based on how expensive they are in reality. That'd be _hard_. Instead each "sample" is exactly one executed bytecode.
+One such thing is the call to `Collectors.joining` at `302,783` out of `884,288` samples - or rather: executed bytecodes. Bytestacks doesn't attempt to weight different bytecodes based on how expensive they are in reality. That'd be hard to get right: loads can be very expensive, but can also read mostly from caches. This is a diagnostic tool - not a profiler - so instead of guessing each "sample" is exactly one executed bytecode.
 
 Zooming in on `Collectors.joining()` we see that we're spending almost all of that "time" in `java.lang.invoke`, effectively setting up a few lambdas. Looking at the JDK source for the library call this is not so surprising:
 
@@ -89,23 +93,27 @@ Zooming in on `Collectors.joining()` we see that we're spending almost all of th
     }
 ```
 
-A lot to unpack here: there's `() -> new StringJoiner(delimiter, prefix, suffix)`, followed by a few simple method references.
+A lot to unpack here: there's `() -> new StringJoiner(delimiter, prefix, suffix)` followed by a few simple method references, e.g., `StringJoiner::add`. Each of these are in practice a lambda. 
 
-This first lambda captures the three arguments given to it, and evaluates it once the collector is executed. Ever wondered how...?
+While the three method references are lambdas of the non-capturing kind, the first lambda captures the three arguments given to it at setup time for later evaluation. Ever wondered how...?
 
 Simple! 
 
-Regardless of if a lambda is capturing or non-capturing, the runtime will load or generate some code which when invoked gives back an instance of the functional interface expected. In this case a `Supplier<?>`. 
+First, regardless of if a lambda is capturing or non-capturing, the runtime will load or generate some code which when invoked gives back an instance of the functional interface expected. In this case a `Supplier<?>`. What functional interface to implement is inferred by `javac` at compile time and kept around as metadata in the compiled class. The classes implementing these functional interfaces are referred to as lambda proxy classes.
 
-Spinning up these lambda proxy classes happens a bit higher up in that flame (or deeper down the stack) at `InnerClassLambdaMetafactory.spinInnerClass`. Once the proxy class has been spun up it's turned into a `MethodHandle`, linked into a `CallSite`, which the VM then magically installs into `invokedynamic` bytecode at the callsite in `Collectors.joining`.
+Spinning up these lambda proxy classes happens a bit higher up in that flame at `InnerClassLambdaMetafactory.spinInnerClass`. Once the proxy class has been spun up it's turned into a `MethodHandle`, which is wrapped in a `CallSite`, which the VM in turn magically installs in lieu of the `invokedynamic` call.
 
-There's _a lot_ more to say about the inner workings of lambdas and their translation at compile- and runtime. For most intents purposes [this write-up](https://cr.openjdk.java.net/~briangoetz/lambda/lambda-translation.html) by Brian Goetz still holds, but there are a few developments in the pipeline.
+Ahem...
 
-The gist of it is that for a capturing lambda the piece of code generated to give us the functional object is likely a constructor taking the captured values as arguments, and then there's code to get those captured values and send them on to the translated method that in the end will do `new StringJoiner(delimiter, prefix, suffix)`.
+There's _a lot_ more to say about the inner workings of lambdas and their translation at compile- and runtime. For most intents and purposes [this write-up](https://cr.openjdk.java.net/~briangoetz/lambda/lambda-translation.html) by Brian Goetz still holds, but there are a few developments in the pipeline.
+
+The gist of it is that for a capturing lambda the `MethodHandle` returned is likely a handle to a constructor taking the captured values as arguments, and then there's code generated in the proxy class to get those captured values and send them on to the translated method that in the end will do `new StringJoiner(delimiter, prefix, suffix)`.
+
+Quite the ceremony!
 
 ### Setting up an experiment
 
-There's a lot of code spent generating bytecode here. What if there was only one captured argument? By creating the `StringJoiner` eagerly, we could write a lambda that captures only that:
+What if we could have only one argument to capture? One simple experiment would be creating the `StringJoiner` up front and then only capture that:
 
 ```diff
 diff -r c9325aa887da src/java.base/share/classes/java/util/stream/Collectors.java
@@ -124,14 +132,13 @@ diff -r c9325aa887da src/java.base/share/classes/java/util/stream/Collectors.jav
      }
 ```
 
-Let's apply this patch and running `HelloJoin` again:
+Maybe that is a bit awkward semantically, but let's just go with it. Applying this patch and tracing `HelloJoin` again:
 
 ```
 $JAVA_HOME/bin/java -XX:+TraceBytecodes HelloJoin > hellojoin.test
 ./bytestacks/bytestacks hellojoin.test
 ```
 
-Result:
 [<img src="/images/hellojoin.test.svg" alt="FlameGraph of running HelloJoin with patch applied" />](/images/hellojoin.test.svg)
 
 Unsurprisingly, it looks pretty much the same. But there are some differences if we look closely... zooming in on `Collectors.joining` we see that there's been a drop from `302,783` to `282,291`. That's almost a 7% reduction. 
@@ -192,8 +199,16 @@ Experiment:
 
 From 83.7ms to 82.6ms on average. Not much, but the improvement is visible on various counters and reproducible enough.
 
-Is it enough to actually care about, though? Well, I've filed RFEs for smaller improvements, so I probably will for this one, too. :-)
+Is it enough to actually care about, though?
 
-While I think silly point fixes like this one shouldn't be discarded on a whim - especially if the code in question can be expected to be in common use and we can show they add up to real improvements - but perhaps there are ways to improve things across the board. 
+Well, I've filed RFEs for smaller improvements, but mainly for things that would be executed unconditionally during bootstrap. As this is library code the bar might be a bit higher. And perhaps there are _semantic_ difficulties with creating the `StringJoiner` eagerly.
 
-Such as optimizing the generators for these lambda proxy classes. 
+Hmm...
+
+We *could* specialize for the single-argument case: `() -> StringJoiner(delimiter)`, but then we'd generate two different proxy classes for the two different capturing `Collectors.joining` methods.
+
+Maybe _that_ wouldn't be too bad.
+
+Or maybe there's a better way to speed this up that would have wider implications and we should try to generalize things.
+
+Either way: these are all questions that typically follows once you've found an inefficiency like this, so I hope this was a successful demonstration.
