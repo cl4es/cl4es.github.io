@@ -159,11 +159,11 @@ Let's not do that, since in the part of the code that we actually did change, we
 
 ### Verifying results
 
-Seeing an improvement with bytestacks does *not* verify that an experiment has a real, measurable impact. Getting rid of 20k bytecode might measure up to some real improvement, or it might get lost in the noise.Based on experience 10k can be anything from nothing up to around a millisecond or so, but it very much depends. 
+Seeing an improvement with bytestacks does *not* verify that an experiment has a real, measurable impact. Getting rid of 20k bytecode might measure up to some real improvement, or it might get lost in the noise. Based on experience 10k can be anything from nothing up to around a millisecond or so, but it very much depends. 
 
 To verify if there's a real change I'll produce product builds with and without the patch, and run something that measures actual time spent running this little program. Preferably many, many times, to account for random noise, interrupts etc.
 
-On Linux, `perf stat` has become my go-to tool of choice for this. It might be a a bit heavy-handed, but gives a lot of useful information about program behavior for free:
+On Linux, `perf stat` has become my tool of choice for startup evaluation. It might be a a bit heavy-handed, but it collects some useful information for "free":
 
 ```
 perf stat -r 200 $JAVA_HOME/bin/java HelloJoin > /dev/null
