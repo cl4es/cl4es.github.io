@@ -55,9 +55,11 @@ If you open `hellojoin.base` you'd see there's _a lot_ of output, and it always 
 [5158]        2     3  return
 ```
 
-As you might guess: yes, this logs every bytecode that the JVM interprets for the entire runtime of the program. And the first thing the interpreter does is initializing the `Object` class.
+As you might guess: yes, this logs every bytecode that the JVM interprets for the entire runtime of the program. And the first thing the interpreter does is initializing the `Object` class. You can spend hours sifting through this!
 
-What bytestacks does is simply to parse this log, builds up the call stacks and keeps count on how often we execute a bytecode for each unique stack.
+But that gets old fast. 
+
+What bytestacks parse this output, builds up the call stacks, then keeps a running score on how often we execute a bytecode for each unique stack. Let's try it!
 
 ```
 git clone https://github.com/cl4es/bytestacks.git
@@ -190,6 +192,8 @@ Experiment:
 
 From 83.7ms to 82.6ms on average. Not much, but the improvement is visible on various counters and reproducible enough.
 
-Is it enough to actually care about, though? What do you think?
+Is it enough to actually care about, though? Well, I've filed RFEs for smaller improvements, so I probably will for this one, too. :-)
 
-Point fixes like the above patch shouldn't be discarded on a whim - especially if the code on question is in common use and we can show they add up to real improvements - but perhaps there are other options to consider that would have a more systematic effect, such as optimizing the bytecode generators for these lambda proxy classes.
+While I think silly point fixes like this one shouldn't be discarded on a whim - especially if the code in question can be expected to be in common use and we can show they add up to real improvements - but perhaps there are ways to improve things across the board. 
+
+Such as optimizing the generators for these lambda proxy classes. 
