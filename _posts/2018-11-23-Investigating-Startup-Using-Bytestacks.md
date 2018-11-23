@@ -101,7 +101,7 @@ Simple!
 
 First, regardless of if a lambda is capturing or non-capturing, the runtime will load or generate some code which when invoked gives back an instance of the functional interface expected. In this case a `Supplier<?>`. What functional interface to implement is inferred by `javac` at compile time and kept around as metadata in the compiled class. The classes implementing these functional interfaces are referred to as lambda proxy classes.
 
-Spinning up these lambda proxy classes happens a bit higher up in that flame at `InnerClassLambdaMetafactory.spinInnerClass`. Once the proxy class has been spun up, we get hold of a `MethodHandle` that produce instances of said functional interface. This *could* be a handle to a constructor. This handle is then wrapped in a `CallSite`, which the VM knows how to magically installs in lieu of the `invokedynamic` call so that subsequent visits to the same method won't have to do all this _again_.
+Spinning up these lambda proxy classes happens a bit higher up in that flame at `InnerClassLambdaMetafactory.spinInnerClass`. Once the proxy class has been spun up, we get hold of a `MethodHandle` that produce instances of said functional interface. This *could* be a handle to a constructor, or a handle returning a constant. Either way the handle is then wrapped in a `CallSite`, which the VM knows how to magically install in lieu of the `invokedynamic` instruction that triggered all this bootstrapping, so that subsequent visits to the same bytecode instruction won't have to do all this _all over again_.
 
 Ahem...
 
