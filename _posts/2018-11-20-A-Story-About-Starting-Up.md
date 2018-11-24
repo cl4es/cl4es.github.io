@@ -65,11 +65,11 @@ Thanks to a huge amount of effort from Mandy Chung, Alan Bateman and others, mys
 
 Still, JDK 9 shipped with some startup regressions. Maybe 10-25ms longer to run a Hello World compared to JDK 8, depending on machine and OS. However, this was the first release in the more rapid release cadence. As it was not destined to become an LTS release, we saw an opportunity to deal with a few of these regressions. It felt the attitude towards small, incremental improvements became more open and encouraging.
 
-So we kept at it. Alan found a way to improve the module resolution, cutting away 10-15ms in one big chunk. I kept finding minor things to micro-optimize, both in the JDK libraries and in the [VM](https://bugs.openjdk.java.net/browse/JDK-8180614) (turns out Jigsaw wasn't the only thing to blame!). 
+So we kept at it. Alan found a way to improve the module resolution, cutting away 10-15ms in one big chunk. I kept finding minor things to micro-optimize, both in the JDK libraries and inside the [VM](https://bugs.openjdk.java.net/browse/JDK-8180614) (turns out Jigsaw wasn't the only thing to blame for those regressions in JDK 9!). 
 
-Come release day the startup numbers were quite evenly matching JDK 8 on most machines. 
+When we wrapped up development of JDK 10 startup numbers were quite evenly matched with JDK 8 (on most machines).
 
-Around this time I released a simple tool I had written to help investigating JVM startup: [bytestacks](https://github.com/cl4es/bytestacks). Maybe someone could use it to find something that we'd missed.
+Around this time I found time to release a simple tool I had written to help investigating JVM startup: [bytestacks](https://github.com/cl4es/bytestacks). Maybe someone could use it to find something that we'd missed.
 
 ### 2018: Crouching Lambdas, Hidden LambdaForms
 
