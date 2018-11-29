@@ -44,7 +44,7 @@ I've touched on regressions and improvements to Java startup in both talks and i
 
 ### Other improvements
 
-- (App)CDS has been continually improved to be able to include more and more things that the JVM would otherwise have to evaluate at runtime
+- (App)CDS has been continually improved to be able to include more and more things that the JVM would otherwise have to calculate at runtime - and more and more of the data included in the CDS archive is read-only in a way that allows it to be mapped in directly. This facilitates sharing between processes, enabling footprint wins. Up until JDK 11 this includes String constants. JDK 12 adds support for more generic read-only Java objects to be mapped in via shared archives.
 - An experimental AOT tool was added in JDK 9, `jaotc`, which allows applications to compile Java code ahead of time to a shared library. It can speed up time to performance and reduce CPU use early on in the JVM lifecycle, but overheads in mapping in the shared library itself means _startup_ often regress.
 
 
