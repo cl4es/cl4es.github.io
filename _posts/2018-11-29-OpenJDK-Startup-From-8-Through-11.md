@@ -38,13 +38,13 @@ I've touched on regressions and improvements to Java startup in both talks and i
 ### JDK 11
 
 - [JDK-8198418](https://bugs.openjdk.java.net/browse/JDK-8198418): Invoke LambdaMetafactory::metafactory exactly from the BootstrapMethodInvoker
-  - Carves a large chunk off of the cost for bootstrapping lambdas
+  - Carves a large chunk off of the cost for bootstrapping lambdas.
+  - Similar trick applied to help bootstrap [Indyfied String concatenation](https://openjdk.java.net/jeps/280) a bit faster. This JDK 9 feature trades a bit of startup overhead for better peak performance, but hopefully we can further reduce the startup overhead. (I've mentioned elsewhere that JDK 12 is set to reduce the startup overheads of ISC by more than half...)
+ 
+- 27 other startup enhancements
 
-- 28 other startup enhancements
+### Looking forward
 
-### Other improvements
-
+- Startup regressed on some measures in JDK 9, but we've since found ways to improve, and on many deployments and systems JDK 11 starts faster than JDK 8. As you're using more and more features of the JDK, the gap widens. 
 - (App)CDS has been continually improved to be able to include more and more things that the JVM would otherwise have to calculate at runtime - and more and more of the data included in the CDS archive is read-only in a way that allows it to be mapped in directly. This facilitates sharing between processes, enabling footprint wins. Up until JDK 11 this includes String constants. JDK 12 adds support for more generic read-only Java objects to be mapped in via shared archives.
-- An experimental AOT tool was added in JDK 9, `jaotc`, which allows applications to compile Java code ahead of time to a shared library. It can speed up time to performance and reduce CPU use early on in the JVM lifecycle, but overheads in mapping in the shared library itself means _startup_ often regress.
-
 
