@@ -32,6 +32,10 @@ I've touched on regressions and improvements to Java startup in both talks and i
 
 - AppCDS open sourced!
   - Using AppCDS can reduce the startup time of an application by 25-40%
+  - (App)CDS has been continually improved since to be able to include more and more things that the JVM would otherwise have to calculate at runtime - and more and more of the data included in the CDS archive is read-only in a way that allows it to be mapped in directly. This facilitates sharing between processes, enabling footprint wins. Up until JDK 11 this includes String constants. JDK 12 adds support for more generic read-only Java objects to be mapped in via shared archives.
+
+- [JDK-8146115](https://bugs.openjdk.java.net/browse/JDK-8146115): Improve docker container detection and resource configuration usage
+  - While not strictly a startup improvement, being a better citizen when resources are limited can lead to much smoother behavior overall, including startup.
 
 - ~25 other startup enhancements
 
@@ -40,11 +44,14 @@ I've touched on regressions and improvements to Java startup in both talks and i
 - [JDK-8198418](https://bugs.openjdk.java.net/browse/JDK-8198418): Invoke LambdaMetafactory::metafactory exactly from the BootstrapMethodInvoker
   - Carves a large chunk off of the cost for bootstrapping lambdas.
   - Similar trick applied to help bootstrap [Indyfied String concatenation](https://openjdk.java.net/jeps/280) a bit faster. This JDK 9 feature trades a bit of startup overhead for better peak performance, but hopefully we can further reduce the startup overhead. (I've mentioned elsewhere that JDK 12 is set to reduce the startup overheads of ISC by more than half...)
+
+- `-XX:+UseDynamicNumberOfGCThreads` and `-XX:+UseDynamicNumberOfCompilerThreads` by default, which scales up the JVMs use of resources for background GC and JIT activity more gracefully
  
 - 27 other startup enhancements
 
-### Looking forward
 
-- Startup regressed on some measures in JDK 9, but we've since found ways to improve, and on many deployments and systems JDK 11 starts faster than JDK 8. As you're using more and more features of the JDK, the gap widens. 
-- (App)CDS has been continually improved to be able to include more and more things that the JVM would otherwise have to calculate at runtime - and more and more of the data included in the CDS archive is read-only in a way that allows it to be mapped in directly. This facilitates sharing between processes, enabling footprint wins. Up until JDK 11 this includes String constants. JDK 12 adds support for more generic read-only Java objects to be mapped in via shared archives.
+### TL;DR
+
+Startup regressed on some measures in JDK 9, but we fixed most of that. On many deployments and systems JDK 11 will get up and running faster than JDK 8 without any effort. If you're heavily using lambdas and other new and advanced features, JDK 11 is likely to pull further ahead.
+
 
