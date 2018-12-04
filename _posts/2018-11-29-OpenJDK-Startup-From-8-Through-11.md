@@ -6,7 +6,9 @@ tags:
 - java
 ---
 
-I've touched on regressions and improvements to Java startup in both talks and in an [earlier entry](/2018/11/20/A-Story-About-Starting-Up.html) in my blog. I got some nice feedback, and also requests for more details, perhaps for inclusion in talks about OpenJDK, so this is just a quick summary of that:
+I've touched on regressions and improvements to Java startup in both talks and in an [earlier entry](/2018/11/20/A-Story-About-Starting-Up.html) in my blog. I got some nice feedback along with requests for ever more details.
+
+So here's a quick summary:
 
 <img src="/images/hellolambda.png" alt="HelloWorld and HelloWorld numbers from 8-11"/>
 
