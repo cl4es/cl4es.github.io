@@ -14,12 +14,12 @@ I've touched on regressions and improvements to Java startup in both talks and i
 
 - The Java module system brings both startup improvements and regressions
   - On the simplest of Hello World programs there's a bit of added up front cost
-  - This up-front cost pays off in slighlty faster class loading off for things loaded off the module path.
+  - Slightly faster class loading overall: the JVM knows which packages are in which module, so delegating through a hierarchy of class loaders is minimized. This indirectly helps classes loaded from the class path, too.
   - `jlink` has a few built-in plugins to move some validation and code generation (around lambdas) from runtime to link time, including the bulk of an effort to reduce lambda startup overheads. As is visible in the graph above the improvements to HelloLambda outweigh the regression in HelloWorld.
 
 - G1 replaced ParallelGC as the default GC
-  - A few more threads created early in the JVMs lifecycle..
-  - G1 can cause a slightly longer delay in _shutting down_ the JVM. This behavior G1 was [_greatly_ improved](https://bugs.openjdk.java.net/browse/JDK-8136854) in JDK 9. Still, even with several other startup, scalability and performance improvements to G1 during development of JDK 9, naïve startup measurements can see a bit longer total time spent attributable to the use of G1 compared to ParallelGC
+  - A few more threads created early on, a little added cost due increased complexity...
+  - G1 _can_ cause a slightly longer delay in _shutting down_ the JVM. This behavior G1 was [_greatly improved_](https://bugs.openjdk.java.net/browse/JDK-8136854) in JDK 9. Still, even with several other startup, scalability and performance improvements to G1 during development of JDK 9, naïve startup measurements can see a bit longer total time spent attributable to the use of G1 compared to ParallelGC
 
 ### JDK 10
 
@@ -53,5 +53,3 @@ I've touched on regressions and improvements to Java startup in both talks and i
 ### TL;DR
 
 Startup regressed on some measures in JDK 9, but we fixed most of that. On many deployments and systems JDK 11 will get up and running faster than JDK 8 without any effort. If you're heavily using lambdas and other new and advanced features, JDK 11 is likely to pull further ahead.
-
-
