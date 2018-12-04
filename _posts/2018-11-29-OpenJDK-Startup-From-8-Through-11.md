@@ -19,12 +19,12 @@ I've touched on regressions and improvements to Java startup in both talks and i
 
 - G1 replaced ParallelGC as the default GC
   - A few more threads created early on, a little added cost due increased complexity...
-  - G1 _can_ cause a slightly longer delay in _shutting down_ the JVM. This behavior G1 was [_greatly improved_](https://bugs.openjdk.java.net/browse/JDK-8136854) in JDK 9. Still, even with several other startup, scalability and performance improvements to G1 during development of JDK 9, naïve startup measurements can see a bit longer total time spent attributable to the use of G1 compared to ParallelGC
+  - G1 _can_ cause a slightly longer delay in _shutting down_ the JVM. This behavior was [_greatly improved_](https://bugs.openjdk.java.net/browse/JDK-8136854) in JDK 9. Still, even with several other startup, scalability and performance improvements to G1 during development of JDK 9, naïve startup measurements can see a bit longer total time spent attributable to the use of G1 compared to ParallelGC
 
 ### JDK 10
 
 - [JDK-8185853](https://bugs.openjdk.java.net/browse/JDK-8185853): "Generate readability graph at link time and other startup improvements" 
-  - The single biggest improvement in JDK 10 and meant that the amount of java code we execute during startup fell considerably
+  - The single biggest improvement in JDK 10 - meant the amount of java code we execute during startup fell considerably
 
 - Fixed a few HotSpot regressions that snuck into JDK 9:
   - [Segmented code cache](https://openjdk.java.net/jeps/197) and [JVMCI](https://openjdk.java.net/jeps/243) slowed down a couple of methods that are hot during class loading. Several of these regressions were fixed in JDK 10 ([JDK-8183001](https://bugs.openjdk.java.net/browse/JDK-8183001), [JDK-8180763](https://bugs.openjdk.java.net/browse/JDK-8180763))
