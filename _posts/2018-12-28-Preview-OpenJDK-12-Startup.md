@@ -2,7 +2,7 @@
 layout: post
 title: "Preview: OpenJDK 12 startup"
 author: "cl4es"
-image: /images/hello12.png
+image: /images/hello12.png#
 tags:
 - java
 ---
