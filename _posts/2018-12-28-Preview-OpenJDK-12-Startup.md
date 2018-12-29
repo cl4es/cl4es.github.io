@@ -70,9 +70,9 @@ Unfortuntately there are some startup regressions that eat into the gains we've 
 
 One of these [has been identified and resolved](http://mail.openjdk.java.net/pipermail/hotspot-compiler-dev/2018-December/031924.html) very recently, but has not made it into JDK 12 EA builds just yet. 
 
-Another known issue is due a rewrite to use concurrent hash tables for a few VM internal data structure ([JDK-8208142](https://bugs.openjdk.java.net/browse/JDK-8208142)). There _might_ be time to get some fixes to this into JDK 12, but as things stands it's not really a blocker so I fear work to improve in this area will be pushed off to the next release.
+Another known issue is due a rewrite to use concurrent hash tables for a few VM internal tables ([JDK-8208142](https://bugs.openjdk.java.net/browse/JDK-8208142)). There _might_ be time to get some fixes into JDK 12, but as things stands it's not really a blocker so I fear work to improve in this area will be pushed off to the next release.
 
-And as always there might be a few additional things that slipped under the radar...
+And there might be a few things that slipped under the radar...
 
 ### TL;DR
 
