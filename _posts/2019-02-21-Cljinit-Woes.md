@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "<cljinit> woes"
+title: "cljinit woes"
 author: "cl4es"
 tags:
 - java
