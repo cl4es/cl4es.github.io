@@ -80,8 +80,8 @@ Elapsed: 1596766461 ns
 
 Two orders of magnitude worse in 11.0.2: Oooof!
 
-Profiling this program on 11.0.2 we see a lot of time spent resolving 
-static methods, both in the interpreter and in the JIT compiler. 
+Profiling we see a lot of time spent resolving static methods, with 
+massive overheads in the interpreter and in the JIT compiler code. 
 
 In essence `foo` will be resolved and linked *every time* it's called,
 a result of the bug fix that went into 8u202, 11.0.2, etc. Resolving
@@ -91,7 +91,7 @@ holder class has been fully initialized.
 
 This particular case is accidentally improved in 13-b07 by 
 [JDK-8188133](https://bugs.openjdk.java.net/browse/JDK-8188133), mostly
-by alleviating a lot of work in the compiler, meaning we install an
+by alleviating and avoiding work in the compiler, meaning we install an
 optimized version faster. This doesn't seem to do much for the clojure
 case, though.
 
@@ -169,4 +169,4 @@ Elapsed: 1694381527 ns
 is being initialized. This might even achieve better startup performance
 than before this regression
 2. Wait and see if we'll be able to fix some of the rougher corners in the
-runtime and compiler code. 
+runtime and compiler code.
