@@ -136,7 +136,7 @@ Just a caution: Refactoring out static methods to helper classes is likely not
 going to be enough if all they do is call back into the not-fully-initialized 
 class:
 
-```
+```java
 public class AlsoBad {
   static void foo() {}
   public static class StartupsLittleHelper {
