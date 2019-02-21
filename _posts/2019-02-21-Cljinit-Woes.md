@@ -12,7 +12,7 @@ has a rather large startup/performance issue when running Clojure in certain mod
 <blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr"><a href="https://twitter.com/cl4es?ref_src=twsrc%5Etfw">@cl4es</a>  <a href="https://t.co/3sGSA1PmFF">https://t.co/3sGSA1PmFF</a>  I have a potential fix in Clojure but oooof!</p>&mdash; Ghadi Shayban (@smashthepast) <a href="https://twitter.com/smashthepast/status/1097557132566773760?ref_src=twsrc%5Etfw">18 februari 2019</a></blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-Others were reporting [similar issues](https://bugs.openjdk.java.net/browse/JDK-8219233), and all seemed to be related to Clojure and startup. We tried narrow down the slowdown to something simpler with some success, and identified a few bottlenecks.
+Others were reporting [similar issues](https://bugs.openjdk.java.net/browse/JDK-8219233), and all seemed to be related to Clojure and startup. We tried narrowing down the slowdown to something simpler with some success, and identified a few bottlenecks.
 
 The root issue is a security-sensitive class initialization bug fix that ensures static methods aren't marked as resolved until the class has been fully initialized.
 
