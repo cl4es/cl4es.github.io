@@ -91,9 +91,8 @@ holder class has been fully initialized.
 
 This particular case is accidentally improved in 13-b07 by 
 [JDK-8188133](https://bugs.openjdk.java.net/browse/JDK-8188133), mostly
-by alleviating and avoiding work in the compiler, meaning we install an
-optimized version faster. This doesn't seem to do much for the clojure
-case, though.
+by alleviating and avoiding work in the JIT compiler. This doesn't seem 
+to do much for the clojure case, though.
 
 ## Good <clinit>
 
