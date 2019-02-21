@@ -165,8 +165,6 @@ Elapsed: 1694381527 ns
 ## What now?
 
 0. Stay calm! :-)
-1. Avoid repeatedly and recursively calling into methods of a class that
-is being initialized. This might even achieve better startup performance
-than before this regression
-2. Wait and see if we'll be able to fix some of the rougher corners in the
-runtime and compiler code.
+1. Avoid repeatedly calling - and transitively calling back into - methods of a class that
+is being initialized. You might end up with better startup performance than before.
+2. Wait and see if we'll be able to fix some of these rough corners.
