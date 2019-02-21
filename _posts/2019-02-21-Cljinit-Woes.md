@@ -162,9 +162,14 @@ $ ~/jdks/11.0.2/bin/java AlsoBad.java
 Elapsed: 1694381527 ns
 ```
 
+Based on the profiles I've collected running the clojure reproducers, it seems like
+there's a mix of `Bad` and `AlsoBad` style calls happening. 
+
 ## What now?
 
-0. Stay calm! :-)
-1. Avoid repeatedly calling - and transitively calling back into - methods of a class that
-is being initialized. You might end up with better startup performance than before.
-2. Wait and see if we'll be able to fix some of these rough corners.
+We'll work to resolve some of the corner cases exposed in the OpenJDK here. There are
+no guarantees of how much we'll be able to recuperate. At the very least it will take 
+some time before a fix can be delivered. 
+
+Working around the performance drop by refactoring heavy-lifting to utility classes
+should have lasting benefits.
