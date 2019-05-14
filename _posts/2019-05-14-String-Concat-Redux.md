@@ -74,11 +74,11 @@ foo = "foo" + bar + baz + "foo";
 foo = "foo" + bar + "foo" + baz + "foo";
 ```
 
-1 + 3 + 3 + 1 = 8 shapes already, and that's just getting started. What if `bar` is an `int`? Eight more shapes. What if `baz` is? Another eight. 
+1 + 3 + 3 + 1 = 8 shapes already, and that's just getting started. If we add similar expressions where `bar` is an `int` instead? Eight more shapes. Same, but we replace `baz` with an `int` instead? Another eight. 
 
-The number of shapes of two arguments mixed with constants are thus 8 times the number of types we care about, squared. The types we cared about originally were String, Object and all primitives (8: `boolean`, `byte`, `char`, `short`, `int`, `long`, `float`, `double`), so counting 800 shapes in total. And that's just two arguments.
+The number of shapes of two arguments mixed with constants are thus 8 times the number of types we care about, squared. The types we cared about originally were `String`, `Object` and all primitives (`boolean`, `byte`, `char`, `short`, `int`, `long`, `float`, `double`), so counting 800 shapes in total. And that's just for two arguments.
 
-The factor eight isn't constant, either: With more arguments, the number of ways to mix in String literals also grows. In fact the possibilities doubles with every argument. The actual number of shapes for `n` arguments is roughly `2^(n+1)*10^n`, so for 3 arguments it'd be possible to observe 16 000 shapes in a given application. Four arguments: 320 000.
+The factor eight isn't constant, either: With more arguments, the number of ways to mix in String literals also grows. In fact the possibilities doubles with every argument, so in aggregate have `2^(n+1)` ways to mix in constants around `n` arguments. The actual number of shapes for `n` arguments is, in theory, `2^(n+1)*10^n`. So for 3 arguments it'd be possible to observe 16000 shapes in a given application. Four arguments: 320000, and so on.
 
 In the default strategy for indified String concatenation each shape will require at least some unique class. Maximum number of classes? Well, things gets even more complicated after a while since the `MethodHandle` implementation will start chaining these expressions into sub-expressions that might themselves be partially shareable, but it definitely grows into the millions. 
 
@@ -96,21 +96,21 @@ The default strategy builds up a `MethodHandle` piece by piece using other `Meth
 
 In essence the algorithm remains the same since JDK 9. [The implementation](http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/65464a307408/src/java.base/share/classes/java/lang/invoke/StringConcatFactory.java#l1474) is "arguably hard to read" since the `MethodHandle` expression trees is built up in reverse. 
 
-### JDK 12: indexCoder etc
+### JDK 12: indexCoder, Object Stringifier
 
 In JDK 12, I found that lumping together the `index` and `coder` fields in the JDK 9 implementation into 
 a single `long` field. [This](https://bugs.openjdk.java.net/browse/JDK-8213035) simplified the expression tree a lot, with 
 fewer classes needed for any and all expressions.
 
-I also merged the "Stringifier" used for `String` and `Object` arguments to [only use a single one](https://bugs.openjdk.java.net/browse/JDK-8213741).
+We also [merged](https://bugs.openjdk.java.net/browse/JDK-8213741) the "Stringifier" used for filtering `String` and `Object` arguments into a `String` suited for prepending.
 This effectively means the number of types we care about when determining whether a shape is unique drops from 10 to 9, which drops off a lot of unique shapes.
-Four argument shapes drops from 320 000 to 209 952, for example.
+Four argument shapes drops from 320000 to 209952, for example. Big drop in theory, perhaps not so big in practice, but even on more realistic applications these optimization started to add up.
 
-All in all JDK 12 about halved bootstrap overheads on typical tests.
+All in all JDK 12 about halved bootstrap overheads on some typical scenarios.
 
 ### JDK 13: Folding constants
 
-There are other optimizations coming in 13, but the one that got me all excited is this one:
+While there are a few other nice optimizations coming in JDK 13, the one that got me all excited is this one:
 
 Instead of binding in a simple prepender for each argument and each constant, bind surrounding 
 constants to the prependers for the arguments. This prepender will then prepend the suffix
@@ -118,16 +118,15 @@ constant (if one exist), then prepend of argument, then the prefix constant (if 
 
 This means we'll only bind in one prepender per argument into the 
 main `MethodHandle` tree, and none for each constants. The constants will be neatly _folded_ 
-into the prepender. Your compiler probably does this sort of thing all the time, but we 
-don't have that luxury here (yet).
+into the prepender. (Your compiler probably does this sort of thing all the time, but we 
+don't have that luxury here.)
 
-Effectively this means that constants will no longer affect the shape of the expression,
-so expressions like `"foo" + bar + baz` and `bar + "foo" + baz` will share the same shape
+Effectively this means that constants will no longer affect the shape of the expression.
+So in essence the expressions `"foo" + bar + baz` and `bar + "foo" + baz` will share the same shape
 (assuming `bar` and `baz` are of the same type). This reduces the theoretical number of 
-observable shapes for `n` arguments by a factor of `2^(n+1)`. _tweets excitedly_!
+observable shapes for `n` arguments by a factor of `2^(n+1)`. _>tweets excitedly<_
 
-Still a huge number of possible shapes possible, theoretically, but in practice things are
-looking much better.
+Still a huge number of shapes are possible in theory, but in practice things are looking much better.
 
 ### Show you some numbers
 
@@ -155,15 +154,16 @@ Building and running the above on JDK 8 through most-recent JDK 13 (*EA!)
 ```
 JDK 8:    60ms
 JDK 9:   215ms
+JDK 11:   ??ms
 JDK 12:  111ms
 JDK 13*:  86ms
 ```
 
 What we see here is that the overhead in JDK 9 was pretty hefty, and that we're now
 down to more acceptable numbers. Still a small regression compared to the JDK 8
-`StringBuilder` approach in bootstrap times, but remember that this unlocks some 
-potentially significant throughput improvements. There are always trade-offs involved,
-and historically the JVM favor throughput (and latency) over startup and footprint.
+`StringBuilder` approach in bootstrap times. A small price to pay for better peak
+performance, probably.. There are always trade-offs involved, and historically the 
+JVM favors throughput (and latency) over startup and footprint.
 
 ### Show you some outrageous numbers
 
@@ -185,14 +185,14 @@ JDK   #classes   Time
 difference in loaded classes between running the code built with JDK 8 and built
 with JDK 9 for the given JDK)
 
-We are far from the hypothetical 320000 classes needed for same amount of "shapes" on JDK 9
-through JDK 11: Turns out the `BoundMethodHandle` implementation is pretty good at splitting apart 
-heavy expression trees pretty, which makes reasoning about theoretical bounds of the needed number of 
+It appears we are far from needing one class per "shape" in JDK 9 through 11: Under the hood, the 
+`BoundMethodHandle` implementation is pretty good at splitting apart 
+heavy expression trees, which makes reasoning about theoretical bounds of the needed number of 
 generated `LambdaForm`:s and `Species` classes hard in practice.
 
-But we really do massively reduce the number of classes needed to implement all the shapes in 
-JDK 12, and spectacularly so in the latest builds. The bootstrap time _is_ falling off, too, but 
-not as quickly as I'd have expected on this synthetic test compared to the outcome in other tests.
+But we really do massively reduce the number of classes needed in JDK 12, and spectacularly so 
+in the latest builds. The bootstrap time _is_ falling off, too, but maybe not as quickly as I'd 
+have expected on this synthetic test (compared to the outcome in other tests).
 
-There's more work to be done here, for sure, but we should first and foremost focus on 
+So there's more work to be done here, for sure, but I guess we should focus on 
 improvements that also help in more realistic cases.
