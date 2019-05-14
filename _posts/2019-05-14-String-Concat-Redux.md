@@ -167,32 +167,31 @@ JVM favors throughput (and latency) over startup and footprint.
 
 ### Show you some outrageous numbers
 
-I mentioned above that there are theoretically up to 320 000 shapes needed to implement all 
+I mentioned above that there are theoretically up to 320000 shapes needed to implement all 
 concatenation expressions of four arguments mixed with zero to five constants. 
 Let's see how we fare in practice on something as outrageously synthetic like that.
 
-This little [code generator] generates a program enumerating them all, and we get some pretty interesting results:
+So I wrote a little program to generate a program that enumerates them all, and we get some pretty interesting results:
 
 ```
 JDK   #classes   Time
-8     0           ~3.6s
+8     -           ~3.6s
 11    39394      ~19.5s
 12    27212      ~18.5s
 13*   3174       ~15.6s
 ```
 
-(The application generates 10000 inner holder classes, the #classes listed is the
-difference in loaded classes between running the code built with JDK 8 and built
-with JDK 9 for the given JDK)
+(#classes is the difference in loaded classes between running the code built with JDK 8
+and built with JDK 9 for the given JDK)
 
-It appears we are far from needing one class per "shape" in JDK 9 through 11: Under the hood, the 
-`BoundMethodHandle` implementation is pretty good at splitting apart 
-heavy expression trees, which makes reasoning about theoretical bounds of the needed number of 
-generated `LambdaForm`:s and `Species` classes hard in practice.
+It appears we are far from needing one class per "shape" at this scale in JDK 11: Under the hood, the 
+method handle implementation is pretty good at splitting apart heavy expression trees into shareable
+sub-expressions, which makes reasoning about theoretical bounds of the needed number of 
+generated classes (such as `LambdaForm`:s and `Species` classes) hard in practice.
 
 But we really do massively reduce the number of classes needed in JDK 12, and spectacularly so 
 in the latest builds. The bootstrap time _is_ falling off, too, but maybe not as quickly as I'd 
 have expected on this synthetic test (compared to the outcome in other tests).
 
-So there's more work to be done here, for sure, but I guess we should focus on 
+So there's more work to be done here, for sure, but I guess I should keep in mind to focus on 
 improvements that also help in more realistic cases.
