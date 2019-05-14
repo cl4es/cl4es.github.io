@@ -2,11 +2,13 @@
 layout: post
 title: "String concatenation, redux"
 author: "cl4es"
-draft: true
 tags:
 - java
 ---
 ## A String concatenation story
+
+DRAFT!!
+
 <blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I might be way too excited about this, but it seems I have turned an exponential factor into a constant one... <a href="https://t.co/RPzOnDundN">https://t.co/RPzOnDundN</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1120647321992204288?ref_src=twsrc%5Etfw">23 april 2019</a></blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
