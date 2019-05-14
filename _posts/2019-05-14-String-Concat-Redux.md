@@ -12,7 +12,7 @@ DRAFT!!
 <blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I might be way too excited about this, but it seems I have turned an exponential factor into a constant one... <a href="https://t.co/RPzOnDundN">https://t.co/RPzOnDundN</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1120647321992204288?ref_src=twsrc%5Etfw">23 april 2019</a></blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-Indified String concatenation in JDK 9 is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. If I fail to explain the finer details of this it's likely because I've figured out _all_ the details myself. 
+Indified String concatenation in JDK 9 is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. If I fail to explain the finer details of this then that's probably because I've probably not figured it all out fully myself. 
 
 Let me know if something is particularly unclear, or worse, wrong.
 
@@ -185,15 +185,14 @@ JDK   #classes   Time
 difference in loaded classes between running the code built with JDK 8 and built
 with JDK 9 for the given JDK)
 
-We are far from the hypothetical 320 000 classes needed for the 320000 shapes on JDK 9
-through JDK 11: The `BoundMethodHandle` implementation starts splitting heavy expression 
-trees pretty quickly, so reasoning about max bounds on number of generated `LambdaForm`:s
-and `Species` classes gets messy in practice.
+We are far from the hypothetical 320000 classes needed for same amount of "shapes" on JDK 9
+through JDK 11: Turns out the `BoundMethodHandle` implementation is pretty good at splitting apart 
+heavy expression trees pretty, which makes reasoning about theoretical bounds of the needed number of 
+generated `LambdaForm`:s and `Species` classes hard in practice.
 
-But we really do massively reduce the number of classes needed to
-implement all the shapes in JDK 12, and spectacularly so in the latest builds. 
-The bootstrap time is falling off, too, but not as quickly as I'd have expected compared 
-to the outcome in other tests.
+But we really do massively reduce the number of classes needed to implement all the shapes in 
+JDK 12, and spectacularly so in the latest builds. The bootstrap time _is_ falling off, too, but 
+not as quickly as I'd have expected on this synthetic test compared to the outcome in other tests.
 
-There's more work to be done here, but whatever we do we should definitely focus on improvements
-that also help in more realistic cases.
+There's more work to be done here, for sure, but we should first and foremost focus on 
+improvements that also help in more realistic cases.
