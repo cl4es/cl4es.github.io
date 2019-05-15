@@ -32,7 +32,7 @@ Exactly how expensive depends, but in JDK 9 bootstrapping the first indified Str
 
 One of the clever ideas behind deferring to the runtime to provide a concrete implementation is that our runtimes are likely to evolve faster than the bytecode it ends up running, which will often be compiled to an older target than the JVM version we run on.
 
-At a high level the beautiful thing with this isn't so much the improvements themselves, but that these optimization apply to code compiled to a JDK 9 target or above, and further optimization will keep applying without recompiling. Any numbers in this post remains the same whether I compile with JDK 9 or the latest EA build.
+At a high level the beautiful thing with this isn't so much the improvements themselves, but that these optimization apply to code compiled to a JDK 9 target or above, and further optimization will keep applying without recompiling. Any JDK 9-13 numbers in this post remains the same whether I compile with JDK 9 or the latest EA build.
 
 But let's get into some of those promised implementation details then, shall we? Oh, boy...
 
