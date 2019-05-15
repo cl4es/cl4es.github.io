@@ -7,7 +7,7 @@ tags:
 - java
 ---
 
-Indified String concatenation in JDK 9 is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. If I fail to explain the finer details of this then that's probably because I've probably not figured it all out fully myself, but have rather been picking it up as I go. 
+Indified String concatenation is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. 
 
 Let me know if something is particularly unclear, or worse, wrong.
 
@@ -18,15 +18,15 @@ Let me know if something is particularly unclear, or worse, wrong.
 
 ### Joining Strings
 
-JDK 9 added [JEP 280](https://openjdk.java.net/jeps/280), bringing the ability to emit String concatenation expressions with invokedynamic. 
+[JEP 280](https://openjdk.java.net/jeps/280) - Indify String Concatenation - ISC - brought the ability to implement String concatenation expressions using `invokedynamic` - indy for short. 
 
-What this means is that when a compiler like javac is faced with an expression like `"foo" + bar` then instead of emitting some bytecode sequence that directly implements the expression, it may defer to the runtime to choose a fitting implementation. This can have some interesting results, since the runtime can be free to create a concrete implementation that is better customized for that particular runtime, such as a form that is a better fit for the current breed of JIT compilers. 
+What this means is that when a compiler like javac is faced with an expression like `"foo" + bar` then instead of emitting some bytecode sequence that more directly implements the expression, it uses a indy to defer to the runtime to build up an implementation instead. This can have some interesting effects, since the runtime is free to create a concrete implementation that is better tailored for the particular environment. Mainly the focus has been on building up an implementation that works well with the current breed of JIT compilers.
 
-The `StringBuilder` chains emitted by javac historically turns out to be hard to optimize for most JITs, especially when things get more complex. There's actually been a lot of optimization work over the years to try and optimize some of these things, so when the now-default indified implementation strategy turned out to be able to outperform old bytecode by a rather significant factor (4-6x), it felt like a pretty big deal, and more work is now in progress to apply similar strategies to other parts of the runtime and libraries (e.g., [JEP 348](https://openjdk.java.net/jeps/348)).
+The `StringBuilder` chains emitted by javac historically turns out to occassionally be hard to optimize for most JITs, especially when things get more complex. There's been a lot of optimization work over the years to try and optimize String concatenation, so when an indy implementation managed to outperform those older forms by a rather significant factor (4-6x) there was much excitement. More work is now in progress to apply similar strategies to other parts of the runtime and libraries. For example [JEP 348](https://openjdk.java.net/jeps/348) should hopefully provide an indified version of `String.format` that is quite reminiscent of ISC.
 
-The drawback is that each call site now needs to run through a bootstrap routine, which is likely to be more expensive than "just" loading a bunch of straight-forward, statically compiled bytecode. 
+The drawback is that when loading and linking each call site we now need to run through a complex bootstrap routine, which is likely to be more expensive than "just" loading a bunch of straight-forward, statically compiled bytecode. 
 
-Exactly how expensive depends, but in JDK 9 bootstrapping the first indified String concat expression could take something like 30-90ms (depending on hardware). Some of that bootstrapping overhead is/was one-off, some of it will happen again when bootstrapping the next one. For some that incremental overhead might look benign, but I guess that depends on expectations...
+Exactly how expensive depends, but in JDK 9 bootstrapping the first indified String concat expression could take something like 30-90ms (depending on hardware). Some of that bootstrapping overhead is/was a one-off deal, some of the added overhead will happen again when bootstrapping subsequent call sites. For some cases that incremental overhead might look benign, but I guess that depends on expectations...
 
 ### Optimize the runtime, not the bytecode
 
