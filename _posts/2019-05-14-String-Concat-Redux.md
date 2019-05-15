@@ -157,11 +157,12 @@ public class StringConcatMix {
 
 Building and running the above on JDK 8 through most-recent JDK 13 (*EA!)
 ```
-JDK 8:    60ms
-JDK 9:   215ms
-JDK 11:  164ms
-JDK 12:  111ms
-JDK 13*:  86ms
+         Total   Overhead
+JDK 8:    60ms        0ms
+JDK 9:   215ms      129ms
+JDK 11:  164ms      118ms 
+JDK 12:  111ms       68ms
+JDK 13*:  86ms       46ms
 ```
 
 What we see here is that the overhead in JDK 9 was pretty hefty, and that we're now
@@ -224,3 +225,5 @@ A few ideas:
   all the arguments won't apply perfectly when there are interleaving `String`, `float` and `double` Stringifiers. Since the "Stringification" of `float` and `double` arguments shouldn't be order dependent, we could group the filters and apply each filter in turn.
 - We could try "unrolling" arguments once and consume arguments pairwise. That'd mean we'd need a mixer and a prepender for each combination of two types. We'd need a lot more boilerplate, but might end up with an implementation that builds much shorter trees in practice, so we'd get more reusable building blocks, and fewer unique forms. 
 - Maybe we should also consider emitting a trivial, boxing vararg adapter for when the number of arguments becomes so large that we don't really gain much peak performance from specialization to begin with. Such a fallback might be able to implement every non-trivial shape with a single, complex but somewhat inefficient `MethodHandle`. After some given number of arguments then perhaps the performance loss will be lost in the noise, anyhow.
+
+_Edit: Added overhead measures for `StringConcatMix`_
