@@ -120,8 +120,8 @@ constants to the prependers for the arguments. This prepender will then prepend 
 constant (if one exist), then prepend of argument, then the prefix constant (if on exist).
 
 This means we'll only bind in one prepender per argument into the 
-main `MethodHandle` tree, and none for each constants. The constants will be neatly _folded_ 
-into the prepender. (Your compiler probably does this sort of thing all the time, but we 
+main `MethodHandle`, and none for each constant. The constants will instead be neatly _folded_ 
+into each argument prepender. (Your compiler probably does this sort of thing all the time, but we 
 don't have that luxury here.)
 
 Effectively this means that constants will no longer affect the shape of the expression.
