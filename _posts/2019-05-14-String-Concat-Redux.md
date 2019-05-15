@@ -5,20 +5,17 @@ author: "cl4es"
 tags:
 - java
 ---
-## A String concatenation story
-
-DRAFT!!
 
 <blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I might be way too excited about this, but it seems I have turned an exponential factor into a constant one... <a href="https://t.co/RPzOnDundN">https://t.co/RPzOnDundN</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1120647321992204288?ref_src=twsrc%5Etfw">23 april 2019</a></blockquote>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-Indified String concatenation in JDK 9 is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. If I fail to explain the finer details of this then that's probably because I've probably not figured it all out fully myself. 
+Indified String concatenation in JDK 9 is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. If I fail to explain the finer details of this then that's probably because I've probably not figured it all out fully myself, but have rather been picking it up as I go. 
 
 Let me know if something is particularly unclear, or worse, wrong.
 
 ### TL;DR
 
-Yes.
+String concat is just as fast in JDK 12 and 13, but we use less time and memory to bootstrap.
 
 ### There's a JEP for concat
 
@@ -30,11 +27,11 @@ The `StringBuilder` chains emitted by javac historically turns out to be hard to
 
 The drawback is that each call site now needs to run through a bootstrap routine, which is likely to be more expensive than "just" loading a bunch of straight-forward, statically compiled bytecode. 
 
-Exactly how expensive depends, but in JDK 9 bootstrapping the first indified String concat expression could be something like 30-90ms depending on hardware - and each new call-site will cost a little something extra. Some assumed most of that incremental overhead would be benign, but that might depend on expectations...
+Exactly how expensive depends, but in JDK 9 bootstrapping the first indified String concat expression could take something like 30-90ms (depending on hardware). Some of that bootstrapping overhead is/was one-off, some of it will happen again when bootstrapping the next one. For some that incremental overhead might look benign, but I guess that depends on expectations...
 
 ### Optimize the runtime, not the bytecode
 
-One of the clever ideas behind deferring to the runtime to provide a concrete implementation is that our runtimes are likely to evolve faster than the bytecode it ends up running, which will often be compiled to an older target than the JVM version we run on. In a [previous entry](https://cl4es.github.io/2018/12/28/Preview-OpenJDK-12-Startup.html) I pointed to some improvements I did during the JDK 12 timeframe to reduce bootstrap overhead of String concatenation, without going into much detail.
+One of the clever ideas behind deferring to the runtime to provide a concrete implementation is that our runtimes are likely to evolve faster than the bytecode it ends up running, which will often be compiled to an older target than the JVM version we run on.
 
 At a high level the beautiful thing with this isn't so much the improvements themselves, but that these optimization apply to code compiled to a JDK 9 target or above, and further optimization will keep applying without recompiling. Any numbers in this post remains the same whether I compile with JDK 9 or the latest EA build.
 
@@ -76,7 +73,7 @@ foo = "foo" + bar + "foo" + baz + "foo";
 
 1 + 3 + 3 + 1 = 8 shapes already, and that's just getting started. If we add similar expressions where `bar` is an `int` instead? Eight more shapes. Same, but we replace `baz` with an `int` instead? Another eight. 
 
-The number of shapes of two arguments mixed with constants are thus 8 times the number of types we care about, squared. The types we cared about originally were `String`, `Object` and all primitives (`boolean`, `byte`, `char`, `short`, `int`, `long`, `float`, `double`), so counting 800 shapes in total. And that's just for two arguments.
+The number of shapes of two arguments mixed with constants are thus 8 times the number of types we care about, squared. The types we cared about originally were `String`, `Object` and all primitives (`boolean`, `byte`, `char`, `short`, `int`, `long`, `float`, `double`), so ounting 800 shapes in total. And that's just for two arguments.
 
 The factor eight isn't constant, either: With more arguments, the number of ways to mix in String literals also grows. In fact the possibilities doubles with every argument, so in aggregate have `2^(n+1)` ways to mix in constants around `n` arguments. The actual number of shapes for `n` arguments is, in theory, `2^(n+1)*10^n`. So for 3 arguments it'd be possible to observe 16000 shapes in a given application. Four arguments: 320000, and so on.
 
@@ -102,15 +99,17 @@ In JDK 12, I found that lumping together the `index` and `coder` fields in the J
 a single `long` field. [This](https://bugs.openjdk.java.net/browse/JDK-8213035) simplified the expression tree a lot, with 
 fewer classes needed for any and all expressions.
 
-We also [merged](https://bugs.openjdk.java.net/browse/JDK-8213741) the "Stringifier" used for filtering `String` and `Object` arguments into a `String` suited for prepending.
+I also [merged](https://bugs.openjdk.java.net/browse/JDK-8213741) the "Stringifier" used for filtering `String` and `Object` arguments into a `String` suited for prepending.
 This effectively means the number of types we care about when determining whether a shape is unique drops from 10 to 9, which drops off a lot of unique shapes.
 Four argument shapes drops from 320000 to 209952, for example. Big drop in theory, perhaps not so big in practice, but even on more realistic applications these optimization started to add up.
+
+Oh, and I found out we could reduce the number of rebinds we do when applying the same filter to more than one argument. [This optimization](https://bugs.openjdk.java.net/browse/JDK-8213478) proved quite beneficial to some String concat usage scenarios, and is generally applicable so might end up being an optimization in other places as well.
 
 All in all JDK 12 about halved bootstrap overheads on some typical scenarios.
 
 ### JDK 13: Folding constants
 
-While there are a few other nice optimizations coming in JDK 13, the one that got me all excited is this one:
+While there are a few other nice little optimizations coming in JDK 13, the one that got me all excited is this one:
 
 Instead of binding in a simple prepender for each argument and each constant, bind surrounding 
 constants to the prependers for the arguments. This prepender will then prepend the suffix
@@ -154,15 +153,15 @@ Building and running the above on JDK 8 through most-recent JDK 13 (*EA!)
 ```
 JDK 8:    60ms
 JDK 9:   215ms
-JDK 11:   ??ms
+JDK 11:  164ms
 JDK 12:  111ms
 JDK 13*:  86ms
 ```
 
 What we see here is that the overhead in JDK 9 was pretty hefty, and that we're now
-down to more acceptable numbers. Still a small regression compared to the JDK 8
-`StringBuilder` approach in bootstrap times. A small price to pay for better peak
-performance, probably.. There are always trade-offs involved, and historically the 
+down to more acceptable numbers. Still there's a small regression compared to the JDK 8
+`StringBuilder` approach. Might be a small price to pay for better peak
+performance. There are always trade-offs involved, and historically the 
 JVM favors throughput (and latency) over startup and footprint.
 
 ### Show you some outrageous numbers
@@ -171,11 +170,14 @@ I mentioned above that there are theoretically up to 320000 shapes needed to imp
 concatenation expressions of four arguments mixed with zero to five constants. 
 Let's see how we fare in practice on something as outrageously synthetic like that.
 
-So I wrote a little program to generate a program that enumerates them all, and we get some pretty interesting results:
+So I wrote a [horrible little program](/snippets/StringGen.java) to generate a java source files enumerating them all (the 
+source code generated is 9Mb, and I had to split the implementation into a lot of nested inner classes for it to compile). 
+
+The results are somewhat interesting:
 
 ```
 JDK   #classes   Time
-8     -           ~3.6s
+8     -          ~3.6s
 11    39394      ~19.5s
 12    27212      ~18.5s
 13*   3174       ~15.6s
@@ -189,9 +191,29 @@ method handle implementation is pretty good at splitting apart heavy expression 
 sub-expressions, which makes reasoning about theoretical bounds of the needed number of 
 generated classes (such as `LambdaForm`:s and `Species` classes) hard in practice.
 
-But we really do massively reduce the number of classes needed in JDK 12, and spectacularly so 
+In the end we really do massively reduce the number of classes needed in JDK 12, and spectacularly so 
 in the latest builds. The bootstrap time _is_ falling off, too, but maybe not as quickly as I'd 
 have expected on this synthetic test (compared to the outcome in other tests).
 
-So there's more work to be done here, for sure, but I guess I should keep in mind to focus on 
-improvements that also help in more realistic cases.
+### A subword about theory and practice 
+
+Another saving grace in the implementation is that sub-word integral primitive types (`boolean`, `byte`, 
+`char`, `short`) are automatically widened to `int` for purposes of some of the internal forms created,
+so we end up being concerned about only six types in some of the translation and build-up steps. This
+helps improve internal sharing a lot. The number of classes generated in practice does look closer to `2^5*7^4 = 76832` in
+JDK 11, `2^5*6^4 = 41472` in JDK 12 and `6^4 = 1296` in JDK 13. Various implementation details make us
+use need more in some cases, and fewer in others.
+
+### What's next?
+
+I think there's work to be done here, for sure, but I guess I should keep in mind to focus on 
+improvements that also help in more realistic cases. If we can improve some problematic but
+theoretical corner case we should at least make sure we don't make trivial and realistic cases
+worse.
+
+A few ideas:
+
+- Filtering is applied in order, so the optimization to bind in just one unique filter combinator acting on
+  all the arguments won't apply perfectly when there are interleaving `String`, `float` and `double` Stringifiers. Since the "Stringification" of `float` and `double` arguments shouldn't be order dependent, we could group the filters and apply each filter in turn.
+- We could try "unrolling" arguments once and consume arguments pairwise. That'd mean we'd need a mixer and a prepender for each combination of two types. We'd need a lot more boilerplate, but might end up with an implementation that builds much shorter trees in practice, so we'd get more reusable building blocks, and fewer unique forms. 
+- Maybe we should also consider emitting a trivial, boxing vararg adapter for when the number of arguments becomes so large that we don't really gain much peak performance from specialization to begin with. Such a fallback might be able to implement every non-trivial shape with a single, complex but somewhat inefficient `MethodHandle`. After some given number of arguments then perhaps the performance loss will be lost in the noise, anyhow.
