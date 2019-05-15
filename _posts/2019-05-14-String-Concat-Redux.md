@@ -98,7 +98,7 @@ This gets some of the performance edge from the fact that we can call package-pr
 
 ### JDK 12: indexCoder, Object Stringifier
 
-In JDK 12, I found that lumping together the `index` and `coder` fields in the JDK 9 implementation into 
+In JDK 12, I found we improved by lumping together the `index` and `coder` fields implementation into 
 a single `long` field. [This](https://bugs.openjdk.java.net/browse/JDK-8213035) simplified the expression tree a lot, with 
 fewer classes needed for any and all expressions.
 
