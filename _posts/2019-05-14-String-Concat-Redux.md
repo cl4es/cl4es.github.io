@@ -15,7 +15,7 @@ Let me know if something is particularly unclear, or worse, wrong.
 
 ### TL;DR
 
-String concat is just as fast in JDK 12 and 13, but we use less time and memory to bootstrap.
+String concat peak performance should be just as fast in JDK 9 through JDK 13, but we use less time and memory to bootstrap.
 
 ### There's a JEP for concat
 
