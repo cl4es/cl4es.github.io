@@ -34,9 +34,9 @@ Exactly how expensive depends, but in JDK 9 bootstrapping the first indified Str
 
 One of the clever ideas behind deferring to the runtime to provide a concrete implementation is that our runtimes are likely to evolve faster than the bytecode it ends up running, which will often be compiled to an older target than the JVM version we run on.
 
-At a high level the beautiful thing with this isn't so much the improvements themselves, but that these optimization apply to code compiled to a JDK 9 target or above, and further optimization will keep applying without recompiling. Any JDK 9-13 numbers in this post remains the same whether I compile with JDK 9 or the latest EA build.
+One beautiful thing with this isn't the specific improvements themselves, but that these optimizations apply without recompilation (once you're targetting something newer than JDK 8). Any JDK 9-13 numbers in this post remains the same whether I compile with a target of JDK 9 or any later version.
 
-But let's get into some of those promised implementation details then, shall we? Oh, boy...
+But let's get to those promised implementation details, shall we? Oh, boy...
 
 ### Expression shapes
 
@@ -84,7 +84,7 @@ In practice the number of shapes in any particular program is likely to be much 
 
 ### MethodHandleInlineCopyStrategy
 
-The default strategy builds up a `MethodHandle` piece by piece using other `MethodHandle`s: 
+The default OpenJDK strategy build up an `MethodHandle` combinator tree, piece by piece: 
 
 - first some rough filtering to turn `String`, `Object`, `float` and `double` arguments into `String`
 - then a sequence of "mixers" that look at each argument and calculates the right size and encoding for the String
@@ -93,6 +93,8 @@ The default strategy builds up a `MethodHandle` piece by piece using other `Meth
 - finally take the `String` encoding value and the `byte[]` and allocate the resulting `String`
 
 In essence the algorithm remains the same since JDK 9. [The implementation](http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/65464a307408/src/java.base/share/classes/java/lang/invoke/StringConcatFactory.java#l1474) is "arguably hard to read" since the `MethodHandle` expression trees is built up in reverse. 
+
+This gets some of the performance edge from the fact that we can call package-private APIs in `java.lang`, some from the use of `Unsafe` to work on uninitialized `byte[]`s, and some from the fact that `MethodHandle` combinator trees are likely to be aggressively inlined.
 
 ### JDK 12: indexCoder, Object Stringifier
 
