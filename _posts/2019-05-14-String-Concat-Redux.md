@@ -207,7 +207,7 @@ Another saving grace in the implementation is that subword integral primitive ty
 so we end up being concerned with only six types for the most part (seven in JDK 9-11). This
 helps improve internal sharing of structural classes a lot. The number of classes generated in practice does look closer to `2^5*7^4 = 76832` in
 JDK 11, `2^5*6^4 = 41472` in JDK 12 and `6^4 = 1296` in JDK 13. Various implementation details make us
-use need more in some cases, and fewer in others.
+need more in some cases, fewer in others.
 
 ### What's next?
 
