@@ -201,8 +201,8 @@ have expected on this synthetic test (compared to the outcome in other tests).
 ### A subword about theory and practice 
 
 Another saving grace in the implementation is that sub-word integral primitive types (`boolean`, `byte`, 
-`char`, `short`) are automatically widened to `int` for purposes of some of the internal forms created,
-so we end up being concerned about only six types in some of the translation and build-up steps. This
+`char`, `short`) are automatically widened to `int` for purposes of some of the internal structures created,
+so we end up being concerned with only six types for the most part (seven in JDK 9-11). This
 helps improve internal sharing a lot. The number of classes generated in practice does look closer to `2^5*7^4 = 76832` in
 JDK 11, `2^5*6^4 = 41472` in JDK 12 and `6^4 = 1296` in JDK 13. Various implementation details make us
 use need more in some cases, and fewer in others.
