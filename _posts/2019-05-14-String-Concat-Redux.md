@@ -20,7 +20,9 @@ Let me know if something is particularly unclear, or worse, wrong.
 
 [JEP 280](https://openjdk.java.net/jeps/280) - Indify String Concatenation - ISC - brought the ability to implement String concatenation expressions using `invokedynamic` - indy for short. 
 
-What this means is that when a compiler like javac is faced with an expression like `"foo" + bar` then instead of emitting some bytecode sequence that more directly implements the expression, it uses a indy to defer to the runtime to build up an implementation instead. This can have some interesting effects, since the runtime is free to create a concrete implementation that is better tailored for the particular environment. Mainly the focus has been on building up an implementation that works well with the current breed of JIT compilers.
+What this means is that when a compiler like javac is faced with an expression like `"foo" + bar` then instead of emitting some bytecode sequence that more directly implements the expression, it uses an indy to defer to the runtime to build up an implementation. This can have some interesting effects, since the runtime is free to create a concrete implementation that is better tailored for the particular environment - and also free to hook into some internal implementation details that statically compiled bytecode couldn't (without resorting to `Unsafe` and such). 
+
+Mainly the focus has been on building up an implementation that works well with the current breed of JIT compilers.
 
 The `StringBuilder` chains emitted by javac historically turns out to occassionally be hard to optimize for most JITs, especially when things get more complex. There's been a lot of optimization work over the years to try and optimize String concatenation, so when an indy implementation managed to outperform those older forms by a rather significant factor (4-6x) there was much excitement. More work is now in progress to apply similar strategies to other parts of the runtime and libraries. For example [JEP 348](https://openjdk.java.net/jeps/348) should hopefully provide an indified version of `String.format` that is quite reminiscent of ISC.
 
