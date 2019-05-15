@@ -170,10 +170,11 @@ JVM favors throughput (and latency) over startup and footprint.
 
 I mentioned above that there are theoretically up to 320000 shapes needed to implement all 
 concatenation expressions of four arguments mixed with zero to five constants. 
+
 Let's see how we fare in practice on something as outrageously synthetic like that.
 
-So I wrote a [horrible little program](/snippets/StringGen.java) to generate a java source files enumerating them all (the 
-source code generated is 9Mb, and I had to split the implementation into a lot of nested inner classes for it to compile). 
+So I wrote [this horrible little program](/snippets/StringGen.java) to generate a java program enumerating them all (the 
+source code generated is 9Mb, and I had to split the implementation into a lot of nested inner classes for it to even compile). 
 
 The results are somewhat interesting:
 
@@ -197,12 +198,12 @@ In the end we really do massively reduce the number of classes needed in JDK 12,
 in the latest builds. The bootstrap time _is_ falling off, too, but maybe not as quickly as I'd 
 have expected on this synthetic test (compared to the outcome in other tests).
 
-### A subword about theory and practice 
+### A (sub)word about theory and practice 
 
-Another saving grace in the implementation is that sub-word integral primitive types (`boolean`, `byte`, 
+Another saving grace in the implementation is that subword integral primitive types (`boolean`, `byte`, 
 `char`, `short`) are automatically widened to `int` for purposes of some of the internal structures created,
 so we end up being concerned with only six types for the most part (seven in JDK 9-11). This
-helps improve internal sharing a lot. The number of classes generated in practice does look closer to `2^5*7^4 = 76832` in
+helps improve internal sharing of structural classes a lot. The number of classes generated in practice does look closer to `2^5*7^4 = 76832` in
 JDK 11, `2^5*6^4 = 41472` in JDK 12 and `6^4 = 1296` in JDK 13. Various implementation details make us
 use need more in some cases, and fewer in others.
 
