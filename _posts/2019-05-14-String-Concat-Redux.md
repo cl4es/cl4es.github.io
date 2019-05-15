@@ -2,12 +2,10 @@
 layout: post
 title: "String concatenation, redux"
 author: "cl4es"
+image: /images/concat.png#
 tags:
 - java
 ---
-
-<blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I might be way too excited about this, but it seems I have turned an exponential factor into a constant one... <a href="https://t.co/RPzOnDundN">https://t.co/RPzOnDundN</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1120647321992204288?ref_src=twsrc%5Etfw">23 april 2019</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 Indified String concatenation in JDK 9 is a fantastic beast. In this post I will try to shed some light on some of the implementation details, and maybe get to why I get excited over finding some peculiar way to optimize it from time to time. If I fail to explain the finer details of this then that's probably because I've probably not figured it all out fully myself, but have rather been picking it up as I go. 
 
@@ -15,9 +13,10 @@ Let me know if something is particularly unclear, or worse, wrong.
 
 ### TL;DR
 
-String concat peak performance should be just as fast in JDK 9 through JDK 13, but we use less time and memory to bootstrap.
+<blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I might be way too excited about this, but it seems I have turned an exponential factor into a constant one... <a href="https://t.co/RPzOnDundN">https://t.co/RPzOnDundN</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1120647321992204288?ref_src=twsrc%5Etfw">23 april 2019</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-### There's a JEP for concat
+### Joining Strings
 
 JDK 9 added [JEP 280](https://openjdk.java.net/jeps/280), bringing the ability to emit String concatenation expressions with invokedynamic. 
 
