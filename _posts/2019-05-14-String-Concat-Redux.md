@@ -109,7 +109,10 @@ All in all JDK 12 about halved bootstrap overheads on some typical scenarios.
 
 ### JDK 13: Folding constants
 
-While there are a few other nice little optimizations coming in JDK 13, the one that got me all excited is this one:
+There are a few nice little optimizations coming in JDK 13, including one that should make
+a category of really trivial concatenations bootstrap really fast. 
+
+However, the one that really got me excited is this one:
 
 Instead of binding in a simple prepender for each argument and each constant, bind surrounding 
 constants to the prependers for the arguments. This prepender will then prepend the suffix
@@ -123,9 +126,9 @@ don't have that luxury here.)
 Effectively this means that constants will no longer affect the shape of the expression.
 So in essence the expressions `"foo" + bar + baz` and `bar + "foo" + baz` will share the same shape
 (assuming `bar` and `baz` are of the same type). This reduces the theoretical number of 
-observable shapes for `n` arguments by a factor of `2^(n+1)`. _>tweets excitedly<_
+observable shapes for `n` arguments by a factor of `2^(n+1)`! _*tweets excitedly*_
 
-Still a huge number of shapes are possible in theory, but in practice things are looking much better.
+Still a huge number of shapes are possible in theory; in practice things are looking quite... OK.
 
 ### Show you some numbers
 
@@ -206,7 +209,7 @@ use need more in some cases, and fewer in others.
 
 ### What's next?
 
-I think there's work to be done here, for sure, but I guess I should keep in mind to focus on 
+I think there's still room for improvement, for sure, but I guess I should keep in mind to focus on 
 improvements that also help in more realistic cases. If we can improve some problematic but
 theoretical corner case we should at least make sure we don't make trivial and realistic cases
 worse.
