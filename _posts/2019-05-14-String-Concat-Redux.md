@@ -213,8 +213,8 @@ need more in some cases, fewer in others.
 
 ### What's next?
 
-I think there's still room for improvement, for sure, but I guess I should keep in mind to focus on 
-improvements that also help in more realistic cases. If we can improve some problematic but
+I think there's still room for improvement, for sure, but I guess we should keep in mind to focus on 
+improvements that help in more realistic cases. If we can improve some problematic but
 theoretical corner case we should at least make sure we don't make trivial and realistic cases
 worse.
 
