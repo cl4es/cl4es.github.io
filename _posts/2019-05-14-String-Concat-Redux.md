@@ -74,7 +74,7 @@ foo = "foo" + bar + "foo" + baz + "foo";
 
 1 + 3 + 3 + 1 = 8 shapes already, and that's just getting started. If we add similar expressions where `bar` is an `int` instead? Eight more shapes. Same, but we replace `baz` with an `int` instead? Another eight. 
 
-The number of shapes of two arguments mixed with constants are thus 8 times the number of types we care about, squared. The types we cared about originally were `String`, `Object` and all primitives (`boolean`, `byte`, `char`, `short`, `int`, `long`, `float`, `double`), so ounting 800 shapes in total. And that's just for two arguments.
+The number of shapes of two arguments mixed with constants are thus 8 times the number of types we care about, squared. The types we cared about originally were `String`, `Object` and all primitives (`boolean`, `byte`, `char`, `short`, `int`, `long`, `float`, `double`), so counting 800 shapes in total. And that's just for two arguments.
 
 The factor eight isn't constant, either: With more arguments, the number of ways to mix in String literals also grows. In fact the possibilities doubles with every argument, so in aggregate have `2^(n+1)` ways to mix in constants around `n` arguments. The actual number of shapes for `n` arguments is, in theory, `2^(n+1)*10^n`. So for 3 arguments it'd be possible to observe 16000 shapes in a given application. Four arguments: 320000, and so on.
 
