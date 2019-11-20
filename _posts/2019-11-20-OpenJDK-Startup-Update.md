@@ -53,7 +53,7 @@ There are more things happening here than the bootstrap improvements I've blogge
 
 One obvious cause for larger applications taking seconds to start are the overheads related to class loading, linking and bytecode verification. When loading and linking classes the runtime might also spend time generating bytecode behind the scenes. 
 
-Using [AppCDS](https://blog.codefx.org/java/application-class-data-sharing/) or [Dynamic CDS](https://openjdk.java.net/jeps/350) can often reduce startup time by 20-50%. Not everyone will end up deploying App- or Dynamic CDS, and even if they did the sweet spot might not be to include _everything_ your app might ever use.
+By storing the resulting data in ways the JVM can easily deal with, [AppCDS](https://blog.codefx.org/java/application-class-data-sharing/) or [Dynamic CDS](https://openjdk.java.net/jeps/350) can often reduce startup time by 20-50%. Not everyone will end up deploying App- or Dynamic CDS, and even if they did the sweet spot might not be to include _everything_ your app might ever use.
 
 So while there's good work being done to make CDS even better, there's also a good case to optimize class loading etc in the _absense_ of CDS. And there's been plenty of improvements:
 
@@ -63,13 +63,13 @@ So while there's good work being done to make CDS even better, there's also a go
 
 #### Compiler improvements
 
-The other main contributor to the startup time of a JVM-based application are the direct and indirect effects of JIT compilation. When starting up, the JVM interpret bytecode, while spinning up JIT compiler threads in the background with the sole goal of optimizing the bytecode your application seem to be spending most time in. 
+The other main contributor to the startup time of a JVM-based application are the direct and indirect effects of just-in-time - JIT - compilation. When just starting up, the JVM interpret bytecode, while spinning up JIT compiler threads in the background with the sole goal of optimizing the bytecode your application seem to be spending most time in. 
 
 By default, the OpenJDK JVM, HotSpot, has a tiered configuration where bytecode is first compiled by a fast compiler, C1, into a form that is faster than interpreting bytecode, but also has a lot of profiling counters that help the next tier JIT compiler to optimize as aggressively as possible. By default the next JIT compiler used is C2, which is slower than C1 but generates code that is often many times faster.
 
-Generally: the faster compilations happen, the less time is spent executing code in less optimized phases such as the interpreter and C1-compiled code with profiling.
+Generally: the faster all these compilations happen, the less time is spent executing code in less optimized phases such as the interpreter and C1-compiled code with profiling. But the more time you allow code to stay in a profiling mode, the better the final result. So there are a few trade-offs.
 
-One reason we're spending less resources early is because we don't spin up JIT threads as aggressively as before, due the introduction in JDK 11 of `-XX:+UseDynamicNumberOfCompilerThreads` ([JDK-8198756](https://bugs.openjdk.java.net/browse/JDK-8198756)). We'll only start up more C1 and C2 threads if compilation requests start to queue up faster than the current set can handle them, which means we run a smaller number of threads during startup, which means the JVM is less hungry for memory and CPU.
+Now: one reason we're spending less resources early is because we don't spin up JIT threads as aggressively as we did before. This is due the introduction in JDK 11 of `-XX:+UseDynamicNumberOfCompilerThreads` ([JDK-8198756](https://bugs.openjdk.java.net/browse/JDK-8198756)). This means we'll only start up more C1 and C2 threads if compilation requests start to queue up faster than the current set can handle them, which means we run a smaller number of threads during startup, which means the JVM is less hungry for memory and CPU.
 
 This is amplified by a number of [optimizations in the C1 and C2 compilers](https://bugs.openjdk.java.net/issues/?jql=labels%20in%20(startup)%20and%20subcomponent%20%3D%20compiler%20and%20status%20in%20(Resolved)%20and%20fixVersion%20in%20(9%2C%2010%2C%2011%2C%2012%2C%2013%2C%2014)) themselves which reduce the work required for each compilation. This ranges from improvements to use optimized hardware instructions (when possible), to reducing allocations. The real effect of all this varies between platforms, but I've seen significant speed-ups on every system we test on, which combined with the now more dynamic nature of how many compilation threads we use definitely translate to overall less resource consumption.
 
