@@ -24,7 +24,7 @@ Overall we're down dramatically compared to the historic high for each "app": mo
 
 JDK 14 *is* on target to be a small improvement over JDK 13 on these minimal startup tests, even though the relative improvement is tiny in comparison. While we have done a number of cleanups and improvements, there's no denying that the incremental improvement here is small in both relative and absolute terms. But that's OK, since JDK 13 is _really_ good.
 
-If the numbers skew a bit from my earlier posts it's because I've not primed the JDKs with a CDS archive by running `java -Xshare:dump` in this experiment. This was a trick few knew or cared about, and which we since JDK 12 no longer _have_ to care about thanks to [Default CDS Archives](https://openjdk.java.net/jeps/341) being a thing. If you're really chasing milliseconds there are ways to tune and improve, but overall our goal is to improve the default experience. 
+If the numbers skew a bit from my earlier posts it's because I've not primed the JDKs with a CDS archive by running `java -Xshare:dump` in this experiment. This was a trick few knew or cared about, and which we since JDK 12 no longer _have_ to care about thanks to [Default CDS Archives](https://openjdk.java.net/jeps/341) being a thing. If you're really chasing milliseconds there are ways to tune and improve, but our focus is to improve the default - out-of-the-box - experience, so that's what I choose to show here.
 
 ### Scaling up
 
