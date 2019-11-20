@@ -28,27 +28,26 @@ If the numbers skew a bit from my earlier posts it's because I've not primed the
 
 ### Scaling up
 
-Now, just because `Hello World` runs in _37.9ms_ or whatever, that doesn't mean java will start up and run _any_ application fast. Simplifying those early bootstrap overheads is _great_, but will disappear into the noise when loading that big app server or even that new and shiny microservice framework thing.
+Now, just because `Hello World` runs in _37.9ms_ or whatever, that doesn't mean java will start up and run _any_ application just as fast. Simplifying those early bootstrap overheads is _great_, but risk disappearing into the background noise when loading that big app server or even that new and shiny microservice framework thing.
 
-To exemplify, I downloaded the [Micronaut Hello World example](https://github.com/micronaut-projects/micronaut-examples/tree/master/hello-world-java), [modified it slightly](/snippets/micronaut.patch) to not turn off verification and disable most JIT compilation (no cheats!) and add a shutdown hook.
+As an arbitrary object of a few experiments, I downloaded the [Micronaut Hello World example](https://github.com/micronaut-projects/micronaut-examples/tree/master/hello-world-java), [modified it slightly](/snippets/micronaut.patch) to not turn off verification and disable most JIT compilation (no cheats!) and add a shutdown hook.
 
 Run that in a loop a few times, take the average:
 
 <img src="/images/micronaut14.png" alt="Micronaut startup timings" />
 
-We went from somewhere around 2.72s on JDK 8u231, up to 2.96s on JDK 9.0.4, down to around 2.35s on JDK 14. Nothing dramatic, but a 14-15% reduction on the aggregate since JDK 8, and also an improvement relative JDK 13. 
-
+We went from somewhere around 2.72s on JDK 8u231, up to 2.96s on JDK 9.0.4, then dropping down through recent feature releases, currently clocking in at 2.35s on the freshest build of JDK 14. Nothing dramatic, but a 14-15% reduction on the aggregate since JDK 8, and also an improvement relative JDK 13. 
 Perhaps more surprising is that total memory used by the JVM has been dropping, too:
 
 <img src="/images/micronaut14-footprint.png" alt="Micronaut max memory usage" />
 
 Yes: _40% less memory used since JDK 8!_ Looking at various hardware counters we see similar improvements: we're down *40% total CPU* used compared to JDK 9 etc. 
 
-We can of course tune this down even further. Just applying AppCDS and jaotc I got it down to about 1.49s using 138Mb. There are other ways of tuning this down further, or you can use the GraalVM native-image tool and get it down to tens of milliseconds on an even smaller footprint.
+We can of course tune this down even further. Just applying AppCDS and I got it down to about 1.65s using 120Mb. There are other ways of tuning this down further, inside or outside the scope of the OpenJDK.
 
-But the point here is you can get a substantial startup and footprint improvements just by upgrading to 13 (and 14, in due time) without _any_ tuning at all!
+But the point I want to underscore here is that you're likely to get substantial startup and footprint improvements just by upgrading to 13 (and 14, in due time) without _any_ tuning at all!
 
-While bootstrap improvements etc are helping here, there's more to the story here. Let's break it down a bit...
+There are more things happening here than the bootstrap improvements I've blogged about before. Let's break it down...
 
 #### Class loading improvements
 
