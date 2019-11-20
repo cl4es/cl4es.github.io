@@ -12,7 +12,7 @@ With a couple of weeks left until development work on OpenJDK 14 starts to ramp 
 ### Hello World(s)
 
 I've previously blogged about improvements to Hello World from [java 8 through 11](https://cl4es.github.io/2018/11/29/OpenJDK-Startup-From-8-Through-11.html), [java 8 through 12](https://cl4es.github.io/2018/12/28/Preview-OpenJDK-12-Startup.html), so I guess
-it's only fair to start off with a refreshed look at where we're at. I'll leave out JDK 10 and 12, since they have been superseded by 11 (LTS) and 13, respectively. I'll keep JDK 9 around, since although it's also been superseded it's also the last major release and a midpoint between JDK 8 and the rest. 
+it's only fair to start off with a refreshed look at where we're at. I'll leave out JDK 10 and 12, since they have been superseded by 11 (LTS) and 13, respectively. I'll keep JDK 9 around, since although it's also been superseded it's the last major release under the old release model.
 
 Without any tuning or preparation of the JDKs, this is the startup numbers I get today for the Hello World, Hello Lambda and Hello Concat samples on my machine:
 
