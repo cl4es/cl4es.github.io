@@ -1,0 +1,42 @@
+diff --git a/hello-world-java/build.gradle b/hello-world-java/build.gradle
+index 676721c..3bc6ec5 100644
+--- a/hello-world-java/build.gradle
++++ b/hello-world-java/build.gradle
+@@ -60,7 +60,7 @@ test {
+     useJUnitPlatform()
+ }
+ 
+-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1')
++run.jvmArgs()
+ 
+ mainClassName = "example.Application"
+ compileJava.options.compilerArgs += '-parameters'
+diff --git a/hello-world-java/src/main/java/example/Application.java b/hello-world-java/src/main/java/example/Application.java
+index 0531414..4dafafe 100644
+--- a/hello-world-java/src/main/java/example/Application.java
++++ b/hello-world-java/src/main/java/example/Application.java
+@@ -24,6 +24,10 @@ import io.micronaut.runtime.Micronaut;
+ import io.reactivex.Maybe;
+ import io.reactivex.Single;
+ import io.micronaut.http.annotation.*;
++import io.micronaut.context.event.ApplicationEventListener;
++import io.micronaut.discovery.event.ServiceStartedEvent;
++import io.micronaut.runtime.event.annotation.EventListener;
++import io.micronaut.scheduling.annotation.Async;
+ import java.util.List;
+ import io.swagger.v3.oas.annotations.*;
+ import io.swagger.v3.oas.annotations.info.*;
+@@ -63,6 +67,12 @@ import io.swagger.v3.oas.annotations.security.*;
+         }
+ )
+ public class Application {
++    @EventListener
++    @Async
++    public void shutdownHook(final ServiceStartedEvent event) {
++        System.out.println("Shutting down after startup");
++        System.exit(0);
++    }
+ 
+     public static void main(String[] args) {
+         Micronaut.run(Application.class);
+
