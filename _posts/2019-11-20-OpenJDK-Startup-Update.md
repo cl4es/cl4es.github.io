@@ -57,7 +57,7 @@ By storing the resulting data in ways the JVM can easily deal with, [AppCDS](htt
 
 So while there's good work being done to make CDS even better, there's also a good case to optimize class loading etc in the _absense_ of CDS. And there's been plenty of improvements:
 
-- On micronaut, default method generation at link time could take around 800-850M instructions in JDK 8 and 9, well over 0.3s on my machine. Two different improvements in 13 ([JDK-8219713](https://bugs.openjdk.java.net/browse/JDK-8219713)) and 14 ([JDK-8233497](https://bugs.openjdk.java.net/browse/JDK-8233497)) this is down to ~250M instructions, or about 0.1s
+- On micronaut, default method generation at link time could take around 800-850M instructions in JDK 8 and 9, well over 0.3s on my machine. Two different improvements in 13 ([JDK-8219713](https://bugs.openjdk.java.net/browse/JDK-8219713)) and 14 ([JDK-8233497](https://bugs.openjdk.java.net/browse/JDK-8233497)) brought this down to ~250M instructions, or about 0.1s
 - Bytecode verification speedups due improvements such as [JDK-8219579](https://bugs.openjdk.java.net/browse/JDK-8219579)
 - Many small improvements to reduce work, such as removing implicit conversion between `Method*`s and `MethodHandle`s ([JDK-8233913](https://bugs.openjdk.java.net/browse/JDK-8233913)).
 
