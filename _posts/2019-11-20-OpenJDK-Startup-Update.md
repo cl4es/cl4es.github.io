@@ -87,3 +87,6 @@ I did a talk on some of this and some related stuff recently:
 
 Slides [here](http://cr.openjdk.java.net/~redestad/slides/lean_mean_openjdk.pdf).
 
+#### Edits
+
+_Added Y-axis to first graph, h/t @NebulaBytes_
