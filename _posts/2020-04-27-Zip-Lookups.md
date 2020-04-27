@@ -146,9 +146,9 @@ be found in the microbenchmark that I created for JDK-8243469.
   
 The explanation is that when optimizing things away from the "miss" path that
 were previously shared with the "hit" path, then a hit is now much more likely to
-call into take paths that have been warmed up as much. So the hits look costlier
-because they spend relatively more time in the interpreter compared
-to before, even though they do roughly the same amount - or a bit less - of work.
+call into take paths which haven't been warmed up as much. So the hits look costlier
+because they spend more time in the interpreter compared to before, even though
+they do roughly the same amount - or a bit less - of work.
 
 #### Conclusion
 
