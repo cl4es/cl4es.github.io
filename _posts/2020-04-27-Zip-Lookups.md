@@ -72,9 +72,10 @@ to make looking up entries in multi-release jar files [faster](https://bugs.open
 
 #### Bloom filters?
 
-Before I've even had a change to push his first patch, along a patch using [bloom filters](https://mail.openjdk.java.net/pipermail/core-libs-dev/2020-April/065788.html)
-to avoid spending time looking up entries that aren't there. Along with data 
-showing a decent impovement on the aforementioned PetClinic.
+Before I've even had a change to push his first patch, along comes a patch using
+ [bloom filters](https://mail.openjdk.java.net/pipermail/core-libs-dev/2020-April/065788.html)
+to avoid spending time looking up entries that aren't there. Along with data
+showing a decent impovement on the aforementioned PetClinic. Was it still Monday..?
 
 While I enjoy a good bloom filter as much as anyone, they might add some footprint overhead
 and the additional test would be an extra cost if we know the lookup will be a 'hit'.
@@ -87,13 +88,13 @@ I suggested we first try and see how far we can get with optimizations that try
 to be neutral with regards to footprint and lookup hit performance.
  
 This bore fruit within days by avoiding a [redundant arraycopy](https://bugs.openjdk.java.net/browse/JDK-8242842).
-And then we improved on that with an optimization to [fold back-to-back lookups of "name" and "name/"](https://bugs.openjdk.java.net/browse/JDK-8242959). 
+After that we improved on that with an optimization to [fold back-to-back lookups of "name" and "name/"](https://bugs.openjdk.java.net/browse/JDK-8242959). 
  
-Leading up to this there was a flurry of patches from Eirik, which I dutifully merged, cleaned up, tested, and sometimes improved upon.
+Leading up to this was a flurry of patches from Eirik, which I dutifully merged, cleaned up, tested, and sometimes improved upon.
 
 <img src="/images/2020/zip_base_to_8242959.png" alt="From 124ns/op to 81ns/op on misses">
  
-That's the 35% reduction in lookup speed Eirik tweeted about right there - or a 1.5x speed-up, if you like.
+That's the 35% reduction in lookup speed right there - or a 1.5x speed-up, if you like.
  
 ### Going for allocation-free misses
 
