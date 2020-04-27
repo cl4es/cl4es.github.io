@@ -34,8 +34,9 @@ extends `java.util.zip.ZipFile`.
 
 Aided in part by the move to boot the JDK itself from  [runtime images](https://openjdk.java.net/jeps/220)
  rather than a jar file, the native zip 
-implementation was [ported to Java](https://bugs.openjdk.java.net/browse/JDK-8146693). 
-Improved stability was a major driver behind this effort, but also improved performance. 
+implementation was [ported to Java](https://bugs.openjdk.java.net/browse/JDK-8146693) in JDK 9.
+ 
+Improved stability was a major driver behind this effort, but also improved performance.
 
 #### Native is often fast - but JNI is often slow
 
