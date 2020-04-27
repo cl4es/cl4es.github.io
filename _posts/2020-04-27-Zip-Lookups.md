@@ -55,27 +55,27 @@ with a significant boost: almost 3x on lookup hits!
 
 While the native code itself is very fast, the overheads of hopping back and forth 
 between Java and native are significant. When you have to do it over and over, 
-the costs add up. So unless the work we do in a native library can be batched
-in a way that 
+the costs add up. This was prominently evident in the case of a hit, but a miss
+was a single JNI call. Still a win, though.
 
 #### Setting the stage
 
 <img src="/images/2020/zip_8_to_14.png" alt="Hits: 589ns/op in 8, 185 ns/op in 9, 125ns/op in 11. Misses: 210ns/op in 8, 165ns/op in 9, 109 ns/op in 11">
 
-There's been some additional improvements over time, especially leading up to JDK 11.
- Hits almost 5x faster than in 8 - misses almost twice as fast. There appears to have been a 10% regression
- from 11 through 14. Not sure why, yet.
+ There's been some additional improvements over time, especially leading up to JDK 11.
+ Hits almost 5x faster than in 8 - misses almost twice as fast. There also appears to have been a 10% regression
+ from 11 through 14. A bit unclear why, as there's been few changes to `ZipFile` itself. 
 
 ### The recent past
 
-This is when Eirik shows up on the OpenJDK lists. First out with an improvement
+A couple of weeks ago Eirik Bjørsnøs shows up on the OpenJDK lists. First out with an improvement
 to make looking up entries in multi-release jar files [faster](https://bugs.openjdk.java.net/browse/JDK-8242596). 
 
 #### Bloom filters?
 
-Before I've even had a change to sponsor the first patch, along comes Eirik
- with a patch using [bloom filters](https://mail.openjdk.java.net/pipermail/core-libs-dev/2020-April/065788.html)
- to avoid spending time looking up entries that aren't there. Along with data showing a decent impovement on PetClinic.
+Before I've even had a change to push his first patch, along a patch using [bloom filters](https://mail.openjdk.java.net/pipermail/core-libs-dev/2020-April/065788.html)
+ to avoid spending time looking up entries that aren't there. Along with data 
+ showing a decent impovement on the aforementioned PetClinic.
 
  While I enjoy a good bloom filter as much as anyone, they might add some footprint overhead
  and the additional test would be an extra cost if we know the lookup will be a 'hit'.
