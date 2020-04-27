@@ -162,6 +162,7 @@ compared to JDK 8.
 On the Spring PetClinic application, these improvements have improved startup time by 
 a few hundred milliseconds. Hopefully someone will appreciate that. :-)
 
-Big thanks to [@eirbjo](https://twitter.com/eirbjo) for a great collaboration!
+Big thanks to [@eirbjo](https://twitter.com/eirbjo) for a great collaboration! And to
+Lance Andersen, Volker Simonis and others who helped review the patches.
 
 (Hmm, now maybe [this RFE](https://bugs.openjdk.java.net/browse/JDK-8193066) that I filed years ago will be worth fixing...)
