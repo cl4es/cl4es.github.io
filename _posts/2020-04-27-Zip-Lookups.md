@@ -19,7 +19,7 @@ application does during startup. In an application like the
  application perhaps 10% of the startup time is spent looking up entries -- mostly class files.
   
  And what happens when your application is made up of a lot of jar files on a class path? Most of those lookups
- will be misses. With hundreds of jar files, we might have hundreds of missed lookups per hit. Or none. But likely some rather large number on average.
+ will be misses. With hundreds of jar files, we might have hundreds of missed lookups per hit.
 
  So it makes sense to care about the cost of missed lookups. 
 
