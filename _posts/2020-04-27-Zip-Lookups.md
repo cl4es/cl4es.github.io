@@ -42,19 +42,18 @@ Improved stability was a major driver behind this effort, but also improved perf
 Java faster than C?! Well, yes and no.
 
 I recently wrote a [microbenchmark](http://cr.openjdk.java.net/~redestad/8243469/open.01/raw_files/new/test/micro/org/openjdk/bench/java/util/zip/ZipFileGetEntry.java) 
-to investigate the performance of some of the ZipFile changes I've been doing together with Eirik. Let me 
-use it to illustrate some of the differences between the JDK 8 and JDK 9
-implementations.
+to investigate the performance of ZipFile lookups. Let me briefly skip ahead and
+use it to illustrate some of the differences between the JDK 8 and 9.
 
 <img src="/images/2020/zip_8_to_9.png" alt="Hits: 589ns/op in 8, 185 ns/op in 9. Misses: 210ns/op in 8, 165ns/op in 9">
  
-This microbenchmark measures the time of looking up an entry in a zip (or jar) 
+The microbenchmark measures the time of looking up an entry in a zip (or jar) 
 file, and it seems porting from a native library to a Java implementation came 
 with a significant boost: almost 3x on lookup hits!
 
-While the native code itself is very fast, the overheads of hopping back and forth 
-between Java and native via JNI can be significant. When you have to do it over
-and over, the costs add up quick. This was prominently evident in the case of a 
+So while the native code itself is likely very fast - the overheads of hopping back and forth 
+between Java and native via JNI appears to be significant. When you have to do it over
+and over the costs add up quick. This was prominently evident in the case of a 
 hit, while each miss was a single JNI call. Still a win, though.
 
 #### Setting the stage
@@ -99,9 +98,10 @@ That's the 35% reduction in lookup speed right there - or a 1.5x speed-up, if yo
 ### Going for allocation-free misses
 
 I'm just now wrapping up the [next step](https://bugs.openjdk.java.net/browse/JDK-8243469)
-in this optimization saga. While I authored most this particular patch, Eirik
-has made many great suggestions. Both Eirik and I realized early on that we
-could probably do something like it and avoid eagerly allocating the encoded
+in this optimization saga. While I authored most of this patch, Eirik
+has made many suggestions and experiments to back it up and check alternatives.
+ 
+ We realized early on that we could probably do something similar to avoid eagerly allocating the encoded
 `byte[]`. We explored a few variants, but settled for the patch that is now
 out for review:
 
