@@ -14,7 +14,7 @@ This has been a fun few weeks, much thanks to this guy:
 TL;DR: we didn't settle for 35%.
 
 Looking up entries in jars can be a substantial part of what a big java 
-application does during startup. In an application like the
+application does during startup. In the
 [Spring PetClinic](https://github.com/spring-projects/spring-petclinic) sample
 application perhaps 10% of the startup time is spent looking up entries -- mostly class files.
   
@@ -27,26 +27,25 @@ In this post I'll look at some recent - and some not-so recent - improvements in
 
 ### Background
 
-In the Java ecosystem, jar files are everywhere. And all those jar files are
-essentially a type of zip file. Put another way: most every time we load a
-class or a resource from a jar, we go through a `java.util.jar.JarFile`, which
-extends `java.util.zip.ZipFile`.
+Jar files are everywhere. And those jar files are
+essentially a type of zip file. So when loading classes or resources, we
+ are looking up and reading entries from zip files.
 
-Aided in part by the move to boot the JDK itself from  [runtime images](https://openjdk.java.net/jeps/220)
- rather than a jar file, the native zip 
-implementation was [ported to Java](https://bugs.openjdk.java.net/browse/JDK-8146693) in JDK 9.
+Historically, much of the zip file logic was implemented in native C.
+Partially aided by the move to boot the JDK itself from  [runtime images](https://openjdk.java.net/jeps/220)
+ rather than the rt.jar, the native zip implementation was [ported to Java](https://bugs.openjdk.java.net/browse/JDK-8146693) in JDK 9.
  
 Improved stability was a major driver behind this effort, but also improved performance.
 
-#### Native is often fast - but JNI is often slow
+#### C is fast - but JNI can be slow
 
-Java, fast?! Well, yes and no.
+Java faster than C?! Well, yes and no.
 
 I recently wrote a [microbenchmark](http://cr.openjdk.java.net/~redestad/8243469/open.01/raw_files/new/test/micro/org/openjdk/bench/java/util/zip/ZipFileGetEntry.java) 
 to investigate the performance of some of the ZipFile changes I've been doing together with Eirik. Let me 
 use it to illustrate some of the differences between the JDK 8 and JDK 9
 implementations.
- 
+
 <img src="/images/2020/zip_8_to_9.png" alt="Hits: 589ns/op in 8, 185 ns/op in 9. Misses: 210ns/op in 8, 165ns/op in 9">
  
 This microbenchmark measures the time of looking up an entry in a zip (or jar) 
@@ -54,9 +53,9 @@ file, and it seems porting from a native library to a Java implementation came
 with a significant boost: almost 3x on lookup hits!
 
 While the native code itself is very fast, the overheads of hopping back and forth 
-between Java and native are significant. When you have to do it over and over, 
-the costs add up. This was prominently evident in the case of a hit, but a miss
-was a single JNI call. Still a win, though.
+between Java and native via JNI can be significant. When you have to do it over
+and over, the costs add up quick. This was prominently evident in the case of a 
+hit, while each miss was a single JNI call. Still a win, though.
 
 #### Setting the stage
 
