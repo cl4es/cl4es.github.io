@@ -153,13 +153,13 @@ to before, even though they do roughly the same amount - or a bit less - of work
 
 By moving the Zip implementation to Java in JDK 9 we started a series of
 optimizations that have continued, and zooming in on the speed of `getEntry`
-we're now looking at a 6x speedup on hits and 12x speedup on misses in JDK 15
+we're now looking at a 7x speedup on hits and 12x speedup on misses in JDK 15
 compared to JDK 8.
 
 <img src="/images/2020/zip_8_to_15.png" alt="From 124ns/op to 20ns/op on misses">
 
 On the Spring PetClinic application, these improvements have improved startup time by 
-a few hundred milliseconds. 
+a few hundred milliseconds. Hopefully someone will appreciate that. :-)
 
 Big thanks to [@eirbjo](https://twitter.com/eirbjo) for a great collaboration!
 
