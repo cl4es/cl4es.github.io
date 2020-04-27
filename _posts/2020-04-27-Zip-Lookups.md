@@ -11,27 +11,35 @@ This has been a fun few weeks, much thanks to this guy:
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">One positive outcome of social distancing is that I&#39;m now an <a href="https://twitter.com/OpenJDK?ref_src=twsrc%5Etfw">@OpenJDK</a> contributor! This patch saves 35% time on lookup of non-existing ZIP file entries: <a href="https://t.co/tKsy75qE0o">https://t.co/tKsy75qE0o</a> Thanks to <a href="https://twitter.com/cl4es?ref_src=twsrc%5Etfw">@cl4es</a> for awesome help and sponsoring!</p>&mdash; Eirik Bjørsnøs (@eirbjo) <a href="https://twitter.com/eirbjo/status/1251774366544773121?ref_src=twsrc%5Etfw">April 19, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
 
-TL;DR: we didn't settle for 35%...
+TL;DR: we didn't settle for 35%.
+
+Looking up entries in jars can be a substantial part of what a big java 
+application does during startup. In an application like the
+[Spring PetClinic](https://github.com/spring-projects/spring-petclinic) sample
+ application perhaps 10% of the startup time is spent looking up entries -- mostly class files.
+  
+ And what happens when your application is made up of a lot of jar files on a class path? Most of those lookups
+ will be misses. With hundreds of jar files, we might have hundreds of missed lookups per hit. 
+ 
+ So it makes sense to care about the cost of missing. 
+          
+ In this post I'll look at some recent - and some not-so recent - improvements in this area.
 
 ### Background
 
 In the Java ecosystem, jar files are everywhere. And all those jar files are
 essentially a type of zip file. Put another way: most every time we load a
-class or a resource, we go through a `java.util.jar.JarFile`, which extends
-`java.util.zip.ZipFile`.
+class or a resource from a jar, we go through a `java.util.jar.JarFile`, which
+extends `java.util.zip.ZipFile`.
 
-Before JDK 9, even the java core library itself was packed in a jar file which 
-was opened and read by the JVM. This necessitated that much of the zip code was 
-implemented in native code, since, well, it would otherwise be hard to bootstrap
- the JVM. 
-
-For various reasons the native implementation was 
-[moved to Java](https://bugs.openjdk.java.net/browse/JDK-8146693). Improved 
-stability was a major driver behind this effort, but also improved performance. 
-I guess the fact that the JVM was being rewritten pack it's library classes into 
-new, runtime image format aided this effort by eliminating cycles.
+Aided in part by the move to boot the JDK itself from  [runtime images](https://openjdk.java.net/jeps/220)
+ rather than a jar file, the native zip 
+implementation was [ported to Java](https://bugs.openjdk.java.net/browse/JDK-8146693). 
+Improved stability was a major driver behind this effort, but also improved performance. 
 
 #### Native is often fast - but JNI is often slow
+
+Java, fast?! Well, yes and no.
 
 I recently wrote a [microbenchmark](http://cr.openjdk.java.net/~redestad/8243469/open.01/raw_files/new/test/micro/org/openjdk/bench/java/util/zip/ZipFileGetEntry.java) 
 to investigate the performance of some of the ZipFile changes I've been doing together with Eirik. Let me 
@@ -46,8 +54,9 @@ file, and it seems porting from a native library to a Java implementation came
 with a significant boost: almost 3x on lookup hits!
 
 While the native code itself is very fast, the overheads of hopping back and forth 
-between Java and native is significant. When you have to do it over and over, 
-the costs really do add up.
+between Java and native are significant. When you have to do it over and over, 
+the costs add up. So unless the work we do in a native library can be batched
+in a way that 
 
 #### Setting the stage
 
@@ -66,9 +75,8 @@ to make looking up entries in multi-release jar files [faster](https://bugs.open
 
 Before I've even had a change to sponsor the first patch, along comes Eirik
  with a patch using [bloom filters](https://mail.openjdk.java.net/pipermail/core-libs-dev/2020-April/065788.html)
- to avoid spending time looking up entries that aren't there. Backed up with 
- data showing a sizeable improvement on the [Spring PetClinic](https://github.com/spring-projects/spring-petclinic) sample application.
- 
+ to avoid spending time looking up entries that aren't there. Along with data showing a decent impovement on PetClinic.
+
  While I enjoy a good bloom filter as much as anyone, they might add some footprint overhead
  and the additional test would be an extra cost if we know the lookup will be a 'hit'.
  Since there are some widely deployed ways of avoiding misses, e.g., using uber JARs, it's
@@ -134,11 +142,11 @@ out for review:
  it look like cost of hits were regressing. These "regressions" were nowhere to
  be found in the microbenchmark that I created for JDK-8243469.
   
- The explanation is that when optimizing things away from the miss path that
- were previously shared, then a hit is much more likely to take paths that have
- not been warmed up as much yet. So the hits look like they cost a bit more,
- which is because they spend relatively more time in the interpreter compared
- to before on a specific startup test, while the net total time is much improved.
+ The explanation is that when optimizing things away from the "miss" path that
+ were previously shared with the "hit" path, then a hit is now much more likely to
+ call into take paths that have been warmed up as much. So the hits look costlier
+ because they spend relatively more time in the interpreter compared
+ to before, even though they do roughly the same amount - or a bit less - of work.
 
 #### Conclusion
 
@@ -149,8 +157,8 @@ By moving the Zip implementation to Java in JDK 9 we started a series of
  
  <img src="/images/2020/zip_8_to_15.png" alt="From 124ns/op to 20ns/op on misses">
 
-On the PetClinic application, these improvements have improved startup time by 
-almost 10%, or a few hundred milliseconds. 
+On the Spring PetClinic application, these improvements have improved startup time by 
+a few hundred milliseconds. 
 
 Big thanks to [@eirbjo](https://twitter.com/eirbjo) for a great collaboration!
 
