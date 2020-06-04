@@ -113,7 +113,7 @@ out for review:
 
 <img src="/images/2020/zip_base_to_8243469.png" alt="From 124ns/op to 20ns/op on misses">
 
-In this microbenchmark both time per hit and time per hit now drops - and 
+In this microbenchmark both time per hit and time per miss now drops - and 
 substantially so. Misses see a 6x speedup!
  
 This is a slight exaggeration: Since lookups now use `String.hashCode` and
