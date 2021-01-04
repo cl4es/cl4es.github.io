@@ -245,7 +245,7 @@ fromType3Bytes           1.575 ±   0.497  ops/us
 
 -16 bytes per call. Or about 3.2% of the total. Not the ~12% the allocation profiling estimated for this method..
 
-Since I'm running this on a 64-bit JVM with default settings this equals one less allocation of a minimally sized object. Such as an empty array. In real applications a micro-optimizations such as this is likely to be a waste of time 99 times out of 10 - but in internal JDK code that might be used by an assortment of public APIs in any number of ways it _could_ very well be a reasonable thing to consider optimizing. But in this case it seems we might have been led astray...
+Since I'm running this on a 64-bit JVM with default settings this equals one less allocation of a minimally sized object. Such as an empty array. In real applications a micro-optimizations like this is likely to be a waste of time 99 times out of 10 - but in internal JDK code that might be used by an assortment of public APIs in any number of ways it _could_ very well be a reasonable thing to consider optimizing. But in this case it seems we might have been led astray...
 
 A bigger cost allocation-wise is probably that we're copying a `Constructor` from `clazz` on every call. And for calling into a default constructor there's a (deprecated) short-hand that caches the constructor: `clazz.newInstance()`:
 
@@ -258,7 +258,7 @@ fromType3Bytes           1.576 ±   0.061  ops/us
 -120 bytes per call compared to the baseline. That's more like it! And quite possibly a decent throughput gain.
 
 Though our documentation recommends replacing uses of `clazz.newInstance()` with
-`clazz.getDeclaredConstructor().newInstance()`, it appears the latter can underperform due copying a `Constructor` object along with the expensive first-time access check. Fixing this might not be trivial without pulling off some heroics in the JIT compiler so in the meantime we could be better off caching the default constructor in `Provider`. Using a `ClassValue` could be an efficient way of doing so while ensuring we only weakly reference classes - avoiding any leaks:
+`clazz.getDeclaredConstructor().newInstance()`, it appears the latter can underperform due copying along with an expensive (and allocating!) first-time access check. Fixing this might not be trivial without pulling off some heroics in the JIT compiler so in the meantime we could be better off caching the default constructor in `Provider`. Using a `ClassValue` could be an efficient way of doing so while ensuring we only weakly reference classes - avoiding any leaks:
 
 ```java
     private static final ClassValue<Constructor<?>> DEFAULT_CONSTRUCTORS =
