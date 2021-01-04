@@ -26,9 +26,9 @@ I've [drafted a PR](https://github.com/openjdk/jdk/pull/1855) with the current b
 
 [MD5](https://tools.ietf.org/html/rfc1321) is a cryptographic hashing function used for more things beside the `UUID` method we're looking at here.
 
-I'm no cryptography expert but I know that MD5 is considered broken and susceptible to collision attacks. So while it's probably never a good idea to rely on MD5 hashing for anything security sensitive it's a very fast hash that remain a popular choice for integrity checking.
+I'm no cryptography expert but I know that MD5 is considered cryptographically broken and susceptible to collision attacks. So while it's probably never a good idea to rely on MD5 hashing for anything security sensitive it's a very fast hash that remain a popular choice for integrity checking.
 
-As it happens the implementation in the OpenJDK was recently [optimized](https://bugs.openjdk.java.net/browse/JDK-8250902) by means of intrinsifying part of the algorithm. Only on x86 initially, but implementations on other architectures seem to be incoming. Intrinsification is a fun but complicated (and sometimes [surprising](https://alidg.me/blog/2020/12/10/hotspot-intrinsics)) technique where the JVM replaces some Java code with hand-optimized versions during compilation. This recent optimization, which will be added in JDK 16, allegedly improves performance of doing MD5 digests by 15-20%.
+As it happens the MD5 implementation in the OpenJDK was recently [optimized](https://bugs.openjdk.java.net/browse/JDK-8250902) by means of intrinsifying the bulk of the algorithm. Only on x86 initially, but implementations on other architectures seem to be coming. Intrinsification is a fun but complicated (and sometimes [surprising](https://alidg.me/blog/2020/12/10/hotspot-intrinsics)) technique where the JVM replaces some Java code with hand-optimized versions during compilation. This recent optimization, which will be added in JDK 16, allegedly improves performance of doing MD5 digests by 15-20%.
 
 ## Basic performance analysis
 
