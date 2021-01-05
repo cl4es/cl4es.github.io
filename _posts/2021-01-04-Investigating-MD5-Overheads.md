@@ -16,7 +16,7 @@ A few weeks ago we received a [PR](https://github.com/openjdk/jdk/pull/1821) int
 To fix this correctness issue the PR was updated to use a `ThreadLocal`, which comes with its own set of issues: 
 
 - Every thread that has ever called `UUID::nameUUIDFromBytes` would indefinitely hold on to an instance of the MD5 `MessageDigest` object. (This could be partially resolved by wrapping the object stored in the `ThreadLocal` in a `SoftReference`, at the cost of complexity and some speed...)
-- `ThreadLocals` might not play at all nicely with [Project Loom](https://openjdk.java.net/projects/loom/). In fact, the OpenJDK team has deliberately gotten rid of a few dubious `ThreadLocal` optimizations for this reason.
+- `ThreadLocals` might not play at all nicely with [Project Loom](https://openjdk.java.net/projects/loom/), since we can expect the number of virtual threads used to grow at a higher rate. As a precaution the OpenJDK team has deliberately gotten rid of a few dubious `ThreadLocal` optimizations for this reason.
 
 Shooting down or flat out rejecting a PR is no fun, though. And it definitely seems like there is room for improvement here. In this post I'll explore some of that profiling and prototyping work to find alternative optimizations we could consider. Maybe this can inspire even better suggestions.
 
