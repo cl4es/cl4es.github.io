@@ -235,7 +235,7 @@ Both methods are also vararg methods. Calling a vararg method with no arguments 
       return con.newInstance(EMPTY_OBJ);
 ```
 
-Our optimizing JIT compilers can often optimize away such allocations. But in this case we _do_ see a tiny gain:
+Our JIT compilers can often optimize away such allocations. But in this case we _do_ see a tiny gain:
 
 ```
 Benchmark                Score     Error   Units
@@ -245,7 +245,7 @@ fromType3Bytes           1.575 ±   0.497  ops/us
 
 -16 bytes per call. Or about 3.2% of the total. Not the ~12% the allocation profiling estimated for this method..
 
-Since I'm running this on a 64-bit JVM with default settings this equals one less allocation of a minimally sized object. Such as an empty array. In real applications a micro-optimizations like this is likely to be a waste of time 99 times out of 10 - but in internal JDK code that might be used by an assortment of public APIs in any number of ways it _could_ very well be a reasonable thing to consider optimizing. But in this case it seems we might have been led astray...
+Since I'm running this on a 64-bit JVM with default settings this equals one less allocation of a minimally sized object. Such as an empty array. In real applications a micro-optimizations like this is likely to be a waste of time 99 times out of 10 - but in internal JDK code that might be used by an assortment of public APIs in any number of ways it _could_ very well be a reasonable thing to consider. Even so it seems we might have been led astray...
 
 A bigger cost allocation-wise is probably that we're copying a `Constructor` from `clazz` on every call. And for calling into a default constructor there's a (deprecated) short-hand that caches the constructor: `clazz.newInstance()`:
 
@@ -258,7 +258,9 @@ fromType3Bytes           1.576 ±   0.061  ops/us
 -120 bytes per call compared to the baseline. That's more like it! And quite possibly a decent throughput gain.
 
 Though our documentation recommends replacing uses of `clazz.newInstance()` with
-`clazz.getDeclaredConstructor().newInstance()`, it appears the latter can underperform due copying along with an expensive (and allocating!) first-time access check. Fixing this might not be trivial without pulling off some heroics in the JIT compiler so in the meantime we could be better off caching the default constructor in `Provider`. Using a `ClassValue` could be an efficient way of doing so while ensuring we only weakly reference classes - avoiding any leaks:
+`clazz.getDeclaredConstructor().newInstance()`, it appears the latter can underperform due copying along with an expensive (and allocating!) first-time access check. Fixing this might not be trivial without pulling off some heroics in the JIT compiler so in the meantime we could be better off caching the default constructor in `Provider`. 
+
+Using a `ClassValue` could be an efficient way of doing so while ensuring we only weakly reference classes - avoiding any leaks:
 
 ```java
     private static final ClassValue<Constructor<?>> DEFAULT_CONSTRUCTORS =
@@ -273,7 +275,8 @@ Though our documentation recommends replacing uses of `clazz.newInstance()` with
                 }
             };
 
-    private Constructor<?> getConstructor(Class<?> clazz) {
+    private Constructor<?> getConstructor(Class<?> clazz)
+            throw NoSuchMethodException {
         try {
             return DEFAULT_CONSTRUCTORS.get(clazz);
         } catch (RuntimeException re) {
@@ -284,12 +287,12 @@ Though our documentation recommends replacing uses of `clazz.newInstance()` with
         }
     }
 
-    ..
+    ...
     Constructor<?> con = getConstructor(clazz);
     return con.newInstance(EMPTY_OBJ);
 ```
 
-This gives a result very close to using the deprecated `clazz.newInstance()`:
+The need to wrap a `NoSuchMethodException` in a `RuntimeException` and then unwrap it slightly unfortunate, but this does the trick and gives a result very close to using the deprecated `clazz.newInstance()`:
 
 ```
 Benchmark                Score    Error   Units
@@ -317,7 +320,7 @@ fromType3Bytes           1.460 ±  0.089  ops/us
 ·gc.alloc.rate.norm    488.042 ±  0.005    B/op
 ```
 
-Combining the idea of cloning a cached `MD5` object together with the inlining of the buffer read and removing the temporary buffer `x` from `MD5` nets us a rather significant improvement over our baseline:
+Combining the idea of cloning a cached `MD5` object together with the removal of the temporary buffer `x` from `MD5` nets us a rather significant improvement over our baseline:
 
 ```
 Benchmark                Score    Error   Units
