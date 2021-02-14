@@ -11,7 +11,7 @@ tags:
 
 ### Background 
 
-Following up on a recent post: ([Investigating MD5 Overheads](https://cl4es.github.io/2021/01/04/Investigating-MD5-Overheads.html). There I detailed some of the analysis I did around improving `[java.util.UUID::nameUUIDFromBytes](https://github.com/openjdk/jdk/pull/1821)`. As of writing that PR is still open, but we have integrated two other optimizations that improve things substantially.
+Following up on a recent post - ([Investigating MD5 Overheads](https://cl4es.github.io/2021/01/04/Investigating-MD5-Overheads.html) - where I detailed some of the analysis I did around [improving `java.util.UUID::nameUUIDFromBytes`](https://github.com/openjdk/jdk/pull/1821). As of writing that PR is still open, but we have integrated a few optimizations that improve things substantially in the vicinity.
 
 ### Optimize MessageDigest.getInstance
 
