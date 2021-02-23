@@ -10,13 +10,13 @@ tags:
 {:toc}
 
 
-Recently I was doing some minor OpenJDK 17 improvements around how we turn `byte[]`s into `String`s - including [removing the StringCoding.Result struct](https://bugs.openjdk.java.net/browse/JDK-8259842) and [reducing overhead of some legacy `CharsetDecoder`s](https://bugs.openjdk.java.net/browse/JDK-8261418). 
+Recently I was doing some minor OpenJDK improvements around how we turn `byte[]`s into `String`s - including [removing the StringCoding.Result struct](https://bugs.openjdk.java.net/browse/JDK-8259842) and [reducing overhead of some legacy `CharsetDecoder`s](https://bugs.openjdk.java.net/browse/JDK-8261418).
 
-When doing experiments in this area I stumbled upon a performance discrepancy: `new String(bytes, charset)` was often many times faster than creating the same `String` via an `InputStreamReader`.
+When experiments in this area I stumbled upon a performance discrepancy: `new String(bytes, charset)` is often many times faster than creating the same `String` via an `InputStreamReader`, much more than seemed reasonable at first glance.
 
 Analysing why and then optimizing as best I could led to some rather [significant improvements](https://github.com/openjdk/jdk/pull/2574).
 
-TL;DR: Reusing a couple of intrinsic methods implemented to support JEP 254: Compact Strings, we were able to speed up ASCII-compatible `CharsetDecoders` by up to 10x on microbenchmarks. These optimizations should land in OpenJDK 17.
+TL;DR: Reusing a couple of intrinsic methods implemented to support JEP 254: Compact Strings, we were able to speed up ASCII-compatible `CharsetDecoders` by up to 10x on microbenchmarks. These optimizations should land in JDK 17.
 
 # Compact Strings
 
@@ -88,7 +88,7 @@ This is a straightforward check that returns `true` if any value in the input is
 
 ### Experimental setup
 
-A simple but interesting scenario can be found in the [`readStringDirect`](https://github.com/openjdk/jdk/blob/433096a45ea847e2e2ae8cd5a100971939f6a11f/test/micro/org/openjdk/bench/java/io/ByteStreamDecoder.java#L158) [JMH](https://openjdk.java.net/projects/code-tools/jmh/) microbenchmark:
+A simple but interesting scenario can be found in the [`readStringDirect`](https://github.com/openjdk/jdk/blob/433096a45ea847e2e2ae8cd5a100971939f6a11f/test/micro/org/openjdk/bench/java/io/ByteStreamDecoder.java#L158) [JMH](https://github.com/openjdk/jmh) microbenchmark:
 
 ```java
     @Benchmark
@@ -120,7 +120,7 @@ Scanning the profiler output for hot snippets of code then this one stood out as
         │╰  0x00007fef79146241:   jne    0x00007fef79146231    
 ```
 
-Yay, x86 assembler! Let's try to break it down... 
+Yay, x86 assembly! Let's try to break it down...
 
 The first column indicates relative time spent executing each instruction. These values might skew a little hither or dither, but seeing more than 10% attributable to a single instruction is a rare sight.
 
@@ -267,7 +267,7 @@ Plotting the same graph as before with the optimized version paints a wholly dif
 
 Taking the constant overhead of the `InputStreamReader` into account, `readStringReader` now trails `readStringDirect` by roughly a factor of 2.2x, and exhibits similar scaling.
 
-At the 25000 input length data point the optimization sped things up by almost a factor of 10 for US-ASCII. In the PR that has now been integrated I improved every applicable built-in `CharsetDecoder`, so that they can take this intrinsified fast-path when input is ASCII.
+At the 25000 input length data point the optimization sped things up by almost a factor of 10 for US-ASCII. In the aforementioned [PR](https://github.com/openjdk/jdk/pull/2574) - which has now been [integrated](https://github.com/openjdk/jdk/commit/433096a45ea847e2e2ae8cd5a100971939f6a11f) - I sought to improve every applicable built-in `CharsetDecoder`. Perhaps less work than it sounds since many of them inherit from a few base types that could be optimized. The result is many charset decoders can take this intrinsified fast-path when reading ASCII.
 
 Before:
 ```
