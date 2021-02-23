@@ -156,7 +156,7 @@ readStringDirect    1005.956  ±  36.044  ns/op
 readStringDirect    4296.533  ± 870.060  ns/op
 ```
 
-The [intrinsic vectorization of `hasNegatives`](#appendix-internals-of-a-c2-intrinsic) is responsible for more than 4x speed-up in this simple benchmark. Cool!
+The [intrinsic vectorization of `hasNegatives`](#appendix-internals-of-a-c2-intrinsic) is responsible for a greater than 4x speed-up in this simple benchmark. Cool!
 
 # Enter the InputStreamReader
 
