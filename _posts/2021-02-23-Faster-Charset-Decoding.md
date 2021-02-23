@@ -250,7 +250,7 @@ The `while`-loop in `US_ASCII$Decoder.decodeArrayLoop` could then be rewritten l
     dst.position(dp - doff);
     if (sp < sl) {
         if (dp >= dl) {
-        return CoderResult.OVERFLOW;
+            return CoderResult.OVERFLOW;
         }
         return CoderResult.malformedForLength(1);
     }
