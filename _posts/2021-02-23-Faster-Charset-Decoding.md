@@ -12,7 +12,7 @@ tags:
 
 Recently I was doing some minor OpenJDK improvements around how we turn `byte[]`s into `String`s - including [removing the StringCoding.Result struct](https://bugs.openjdk.java.net/browse/JDK-8259842) and [reducing overhead of some legacy `CharsetDecoder`s](https://bugs.openjdk.java.net/browse/JDK-8261418).
 
-When experiments in this area I stumbled upon a performance discrepancy: `new String(bytes, charset)` is often many times faster than creating the same `String` via an `InputStreamReader`, much more than seemed reasonable at first glance.
+When experimenting in this area I stumbled upon a performance discrepancy: `new String(bytes, charset)` is often many times faster than creating the same `String` via an `InputStreamReader`, much more than seemed reasonable at first glance.
 
 Analysing why and then optimizing as best I could led to some rather [significant improvements](https://github.com/openjdk/jdk/pull/2574).
 
