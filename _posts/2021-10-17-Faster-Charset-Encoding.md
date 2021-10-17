@@ -153,11 +153,11 @@ CharsetEncodeDecode.encode:
         EUC-KR  avgt   30  47.918 ± 1.847  us/op
 ```
 
-UTF-8 is 4x faster. Several legacy encodings see 15x improvements. Ok. Unexpected - but very nice!
+UTF-8 is 4x faster. Several legacy encodings see 15x improvements. Not the result I expected getting back at this - but very nice!
 
 ### Combined effect
 
-Microbenchmarks are great tools that have surprisingly spotty predictive power on how real application will behave. A large speed-up in an isolated test might mean little in practice unless that happened to be the bottleneck - which is often rather unlikely. On one application we saw a significant drop in CPU time from the decoder optimization in 17 and.. no improvement on throughput. Perhaps not too surprising since encoding and decoding `String`s often happen when doing I/O, where the bottleneck is probably the network or some disks. Things that regular microbenchmarks typically avoid touching.
+Microbenchmarks are great tools with surprisingly spotty predictive power on how real application will behave. A large speed-up in an isolated test might mean little in practice unless that just-so happened to be the bottleneck. Which is rather unlikely. On one application we saw a significant drop in CPU time from the decoder optimization in 17 and.. no improvement on throughput. Perhaps not too surprising since encoding and decoding `String`s often happen when doing I/O, where the bottleneck is probably the network or some disks. Things that regular microbenchmarks typically avoid touching.
 
 To naively try and emulate the real world a tiny bit better I prepared [EncodeDecodeLoop](/snippets/EncodeDecodeLoop.java): a simple program which generates a chunk of ASCII data, encodes it and writes it to a file, then reads it back before decoding it. These are numbers for `Windows-1251`, using a file, repeated 100.000 times:
 
