@@ -17,9 +17,7 @@ I've previously blogged about some JDK 17 improvements to [charset decoding](htt
 
 But dealing with text is a two-way street. When turning some text data into `char`s the Java APIs _decode_ into an internal representation (which since JEP 254 is either ISO-8859-1 or a variant of UTF-16). When communicating with the outside world, those `char`s will have to be _encoded_ from the internal representation into whichever character is expected out there.
 
-Encoding characters was left more or less unchanged in JDK 17, though, because there was seemingly no straightforward way to adapt existing intrinsics for a similar speed-up. The intrinsic support that did exist only 
-helped when what you're encoding to is specifically ISO-8859-1, optimization work that actually pre-dates the work 
-on compact strings (which added much of the decoding intrinsics).
+Encoding characters was left more or less unchanged in JDK 17, though, because there was seemingly no straightforward way to adapt existing intrinsics for a similar speed-up. The intrinsic that did exist only works specifically for ISO-8859-1.
 
 I have grown up using [ISO 8859-1](https://en.wikipedia.org/wiki/ISO/IEC_8859-1) - a legacy encoding with nice properties such as encoding every supported character using a single byte and not having any emojis. It even has cute nicknames such as "latin-1". But much of the world use something else these days. UTF-8 is probably a good guess.
 
