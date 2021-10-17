@@ -128,15 +128,17 @@ Great! But the fully intrinsified ISO-8859-1 encoding was still much faster.
 
 So I took a long hard look at what that ISO-8859-1 intrinsic actually does. Then it finally dawned upon me. That thing that in hindsight is so obvious.
 
-On x86, `implEncodeISOArray` is [implemented](https://github.com/openjdk/jdk17u/blob/master/src/hotspot/cpu/x86/macroAssembler_x86.cpp#L5630) by setting up a bitmask made up of `0xFF00` repeated 8-32 times (depending on HW). As long as the bitmask detects no bits set when OR:ing against a few `char`s that means that all those `char`s can be ISO-8859-1-encoded. 
+On x86, `implEncodeISOArray` is [implemented](https://github.com/openjdk/jdk17u/blob/master/src/hotspot/cpu/x86/macroAssembler_x86.cpp#L5630) by setting up a bitmask made up of `0xFF00` repeated 8, 16 or 32 times (depending on hardware capabilities). As long as the bitmask detects no bits set when OR:ing against a chunk of `char`s that means that all those `char`s can be ISO-8859-1-encoded.
 
-It then does some AVX magic that ensures every other byte is copied to the destination (`vpackuswb` + `vpermq` = yeah, no, I'm lost.) Thankfully that part isn't something we have to care about. All that needs to be different for our need are those bitmasks. And those were easy enough to spot. All we need is some way to do the same, but with a bitmask that would detect any non-ASCII `char`s: `0xFF80`.
+Every chunk that pass through the filter will be subject to some AVX magic copies every other byte to the destination. (`vpackuswb` + `vpermq` = yeah, no, I get it but I also don't.) Thankfully that part isn't something we have to care about. All that needs to be different for our needs are those bitmasks. And those were easy enough for me to spot. 
 
-It took me a few hours of furiously copy-pasting code from various places in the C2 code base to get it all up and running but finally everything fit together and I had created a new, very derivative, intrinsic: `_encodeAsciiArray`. It's all there in the [PR changelog](https://github.com/openjdk/jdk/pull/5621/commits/cef05f44fd482646c5df496a50bdf78527d908cb), in all its messy, copy-pasty glory and redundant scaffolding.
+All we need is the exact same thing, but with a different bitmask. One that would detect any non-ASCII `char`s `0xFF80`.
+
+It took me a few hours of furiously copy-pasting code from various places in the C2 code base to get it all up and running but finally everything seemed properly duct-taped together and I had created a new, very derivative, intrinsic: `_encodeAsciiArray`. It's all there in the [PR changelog](https://github.com/openjdk/jdk/pull/5621/commits/cef05f44fd482646c5df496a50bdf78527d908cb), redundant scaffolding included.
 
 But it worked!
 
-After cleaning up the intrinsic implementation (thanks to some much needed input from Tobias Hartmann!) and making sure most ASCII-compatible charsets gets the magic treatment then numbers look almost too good to be true:
+After cleaning up the intrinsic implementation (thanks to some much needed input from [Tobias Hartmann](https://twitter.com/TobiasJava)!) and making sure most ASCII-compatible charsets gets the magic treatment then numbers look almost too good to be true:
 
 ```
 CharsetEncodeDecode.encode:
