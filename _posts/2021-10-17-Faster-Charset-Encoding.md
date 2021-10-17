@@ -13,7 +13,7 @@ This is a technical read, but also a story about the process of failing and tryi
 
 ### Decoding / Encoding
 
-I've previously blogged about some JDK 17 improvements to [charset decoding](https://cl4es.github.io/2021/02/23/Faster-Charset-Decoding.html), where I found a way to take advantage of optimizations originally added to optimize [JEP 254](Compact Strings) in a few places - seeing speed-up of 10x or more.
+I've previously blogged about some JDK 17 improvements to [charset decoding](https://cl4es.github.io/2021/02/23/Faster-Charset-Decoding.html), where I used intrinsics originally added to optimize [JEP 254](Compact Strings) in a few places - seeing speed-up of 10x or more.
 
 But dealing with text is a two-way street. When turning some text data into `char`s the Java APIs _decode_ into an internal representation (which since JEP 254 is either ISO-8859-1 or a variant of UTF-16). When communicating with the outside world, those `char`s will have to be _encoded_ from the internal representation into whichever character is expected out there.
 
