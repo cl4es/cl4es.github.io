@@ -13,7 +13,7 @@ This is a technical read, but also a story about the process of failing and tryi
 
 ### Decoding / Encoding
 
-I've previously blogged about some JDK 17 improvements to [charset decoding](https://cl4es.github.io/2021/02/23/Faster-Charset-Decoding.html), where I used intrinsics originally added to optimize [JEP 254](Compact Strings) in a few places - seeing speed-up of 10x or more.
+I've previously blogged about some JDK 17 improvements to [charset decoding](https://cl4es.github.io/2021/02/23/Faster-Charset-Decoding.html), where I used intrinsics originally added to optimize [JEP 254](https://openjdk.java.net/jeps/254) in a few places - seeing speed-up of 10x or more.
 
 But dealing with text is a two-way street. When turning some text data into `char`s the Java APIs _decode_ into an internal representation (which since JEP 254 is either ISO-8859-1 or a variant of UTF-16). When communicating with the outside world, those `char`s will have to be _encoded_ from the internal representation into whichever character is expected out there.
 
@@ -170,7 +170,7 @@ JDK 17      27.526s      6.850s
 JDK 18      21.586s      1.820s
 ```
 
-A huge drop in user time - as expected - but also a significant speed-up on real time measurements. Despite the benchmark doing its worst to bottleneck on disk I/O. Yes, in essence this is yet another microbenchmark, but it suggests that maybe these optimizations - when taken together - _will_ be powerful enough to be seen through the noise on some apps. And doing the same work with CPU is always good.
+A huge drop in user time - as expected - but also a significant speed-up on real time measurements. Despite the benchmark doing its worst to bottleneck on disk I/O. Yes, in essence this is yet another microbenchmark, but it suggests that maybe these optimizations - when taken together - _will_ be powerful enough to be seen through the noise on some apps. And even when there's no observable speed-up to be had, doing the same work using significantly less CPU cycles is always good.
 
 ### Future Work
 
