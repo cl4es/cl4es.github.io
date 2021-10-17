@@ -40,7 +40,7 @@ Windows-1254  avgt   30  41.589 ± 0.911  us/op
       EUC-KR  avgt   30  46.412 ± 1.367  us/op
 ```
 
-In this ASCII-centric test encoding to ISO-8859-1 is faster than pretty much anything else. 4x faster than UTF-8, and more than 10x faster than any of the other encodings. This is thanks to the [`implEncodeISOArray`](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/sun/nio/cs/ISO_8859_1.java#L155) method being intrinsified, something that was implemented already in ([JDK-8](https://bugs.openjdk.java.net/browse/JDK-6896617)).
+In this ASCII-centric test encoding to ISO-8859-1 is faster than pretty much anything else. 4x faster than UTF-8, and more than 10x faster than any of the other encodings. This is thanks to the [`implEncodeISOArray`](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/sun/nio/cs/ISO_8859_1.java#L155) method being intrinsified, something that was implemented already in [JDK-8](https://bugs.openjdk.java.net/browse/JDK-6896617).
 
 The UTF-8 encoder does have a helpful [ASCII fast-path](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/sun/nio/cs/UTF_8.java#L457), explaining that the gap is significantly smaller than for the others:
 
