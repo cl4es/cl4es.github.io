@@ -7,9 +7,9 @@ tags:
 ---
 
 
-TL;DR: `CharsetDecoder`s got much several times faster in JDK 17, leaving `CharsetEncoder` behind. After a few false starts I found a trick to speed up `CharsetEncoder`s similarly. This may or may not speed up your apps in the future. 
+TL;DR: `CharsetDecoder`s got several times faster in JDK 17, leaving `CharsetEncoder` behind. After a few false starts and some help from the community I found a trick to speed up `CharsetEncoder`s similarly. This may or may not speed up your apps in the future. 
 
-This is a technical read, but also a story about the process of failing and trying again, with no graphs and distracting links to source code. Sorry. But there will be cake.
+This is a technical read, but also a story about the process of failing and trying again, with no graphs and lots of distracting links to source code. Sorry. But there will be cake.
 
 ### Decoding / Encoding
 
