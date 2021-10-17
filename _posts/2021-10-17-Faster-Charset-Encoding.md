@@ -44,7 +44,7 @@ Windows-1254  avgt   30  41.589 ± 0.911  us/op
 
 In this ASCII-centric test encoding to ISO-8859-1 is faster than pretty much anything else. 4x faster than UTF-8, and more than 10x faster than any of the other encodings. This is thanks to the [`implEncodeISOArray`](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/sun/nio/cs/ISO_8859_1.java#L155) method being intrinsified, something that was implemented and first seen in JDK 8 already ([JDK-6896617](https://bugs.openjdk.java.net/browse/JDK-6896617)).
 
-The UTF-8 encoder does have a helpful [ASCII fast-path](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/sun/nio/cs/UTF_8.java#L457), explaining that the gap is significantly smaller on these microbenchmarks than the others:
+The UTF-8 encoder does have a helpful [ASCII fast-path](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/sun/nio/cs/UTF_8.java#L457), explaining that the gap is significantly smaller than for the others:
 
 ```java
             // ASCII only loop
@@ -52,7 +52,7 @@ The UTF-8 encoder does have a helpful [ASCII fast-path](https://github.com/openj
                 da[dp++] = (byte) sa[sp++];
 ```
 
-Any charset that is ASCII-compatible would probably benefit from doing the same, but surprisingly they are missing out.
+Any charset that is ASCII-compatible would probably benefit from doing the same, but most are somewhat surprisingly missing such fast-paths.
 
 Regardless: any encoding that is ASCII-compatible (and produce a single byte stream when encoding ASCII) is essentially doing the same thing in this benchmark, but ending up with vastly different results. The difference is that ISO-8859-1 intrinsic, which speeds up ISO-8859-1 and ISO-8859-1 alone. That's not very nice, but that's how it's been since JDK 8.
 
