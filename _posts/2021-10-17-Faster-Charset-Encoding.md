@@ -52,10 +52,9 @@ The UTF-8 encoder does have a helpful [ASCII fast-path](https://github.com/openj
                 da[dp++] = (byte) sa[sp++];
 ```
 
-Any charset that is ASCII-compatible would probably benefit from doing the same. And most of them are.
+Any charset that is ASCII-compatible would probably benefit from doing the same, but surprisingly they are missing out.
 
-But any encoding that would take ASCII code points and produce single-byte encoded ASCII is essentially doing the 
-same thing in this benchmark. Only difference is that ISO-8859-1 intrinsic, which uses SIMD hardware instructions to speed things up.
+Regardless: any encoding that is ASCII-compatible (and produce a single byte stream when encoding ASCII) is essentially doing the same thing in this benchmark, but ending up with vastly different results. The difference is that ISO-8859-1 intrinsic, which speeds up ISO-8859-1 and ISO-8859-1 alone. That's not very nice, but that's how it's been since JDK 8.
 
 ### Dropping the ball
 
