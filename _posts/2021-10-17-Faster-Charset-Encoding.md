@@ -170,7 +170,7 @@ JDK 17      27.526s      6.850s
 JDK 18      21.586s      1.820s
 ```
 
-A big and not entirely unexpected drop in total user (CPU) time (5x), and a significant 44% speed-up on real time - despite bottlenecking on disk I/O. Yes, just as synthetic as most microbenchmarks, but maybe these optimizations when taking together will be seen through the noise on more apps.
+A huge drop in user time - as expected - but also a significant 44% speed-up on real time measurements. Despite the benchmark doing its' best to bottleneck on disk I/O. Yes, in essence this is yet another microbenchmark, but it suggests that maybe these optimizations - when taken together - _will_ be powerful enough to be seen through the noise on some apps. And doing the same work with CPU is always good.
 
 ### Future Work
 
