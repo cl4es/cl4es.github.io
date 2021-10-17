@@ -18,7 +18,7 @@ Analysing why and then optimizing as best I could led to some rather [significan
 
 TL;DR: Reusing a couple of intrinsic methods implemented to support JEP 254: Compact Strings, we were able to speed up ASCII-compatible `CharsetDecoders` by up to 10x on microbenchmarks. These optimizations should land in JDK 17.
 
-# Compact Strings
+## Compact Strings
 
 To understand what I did in depth we must trace the steps back a few years to the work to (re)introduce compact strings in JDK 9. 
 
@@ -39,7 +39,7 @@ Well, while reducing footprint is great in and off itself, you also need to get 
 
 It wouldn't be very nice if the speed-up for strings that fit in ISO-8859-1 came at a major expense for strings requiring UTF-16 encoding. To alleviate such concerns JEP 254 turned out to be substantial effort. The integration lists [9 co-authors and 12 reviewers](https://github.com/openjdk/jdk/commit/7af927f9c10923b61f746eb6e566bcda853dd95a), and I'm sure there was involvement from even more engineers in QA etc.
 
-## Intrinsically fast
+### Intrinsically fast
 
 One way performance was optimized - in many cases over that of the JDK 8 baseline - was by implementing intrinsic methods for compressing `char[]`s to `byte[]`s, for inflating `byte[]`s to `char[]`s, etc.
 
@@ -47,7 +47,7 @@ Intrinsic methods in JDK parlance are Java methods which JVMs, such as OpenJDK H
 
 For the methods implemented in JEP 254, the main benefit is they allow for the tailored use of modern SIMD instructions. [SIMD](https://en.wikipedia.org/wiki/SIMD) stands for Single Instruction, Multiple Data, and collectively describe hardware instructions that operate on many bits of data at once. For example Intel's AVX2 extension can operate on 256 bits of data at once. Use of such instructions allow for great speed-ups in certain cases.
 
-## Deep Dive: `new String(bytes, US_ASCII)`
+### Deep Dive: `new String(bytes, US_ASCII)`
 
 To see which SIMD instructions we might be running let's take one of the simpler scenarios for a spin.
 
@@ -86,7 +86,7 @@ The `if`-branch checks that `CompactStrings` is enabled, then calls out to [`Str
 
 This is a straightforward check that returns `true` if any value in the input is negative. If there are no negative bytes, the input is all ASCII and we can go ahead and copy the input into the `String` internal `byte[]`.
 
-### Experimental setup
+#### Experimental setup
 
 A simple but interesting scenario can be found in the [`readStringDirect`](https://github.com/openjdk/jdk/blob/433096a45ea847e2e2ae8cd5a100971939f6a11f/test/micro/org/openjdk/bench/java/io/ByteStreamDecoder.java#L158) [JMH](https://github.com/openjdk/jmh) microbenchmark:
 
@@ -105,7 +105,7 @@ I also made sure to prepare my JDKs with the `hsdis` shared library, which enabl
 
 I then run the microbenchmark with `-prof perfasm`. This excellent built-in profiler uses the [Linux `perf` profiler](https://perf.wiki.kernel.org/index.php/Main_Page) along with data collected using `-XX:+PrintAssembly` to describe the hottest code regions  the microbenchmark executes in very fine-grained detail.
 
-### Experimental Results
+#### Experimental Results
 
 Scanning the profiler output for hot snippets of code then this one stood out as particularly hot:
 
@@ -142,7 +142,7 @@ Not seen in this picture is the setup to ensure the value in `rcx` is a multiple
 Ok, so we can see how the code we run takes advantage of AVX2 instructions. But how 
 much does this contribute to the performance of the microbenchmark? 
 
-### Benchmarking the effect of the intrinsic
+#### Benchmarking the effect of the intrinsic
 
 As it happens intrinsics can be turned off. This allows us to compare performance with what C2 would give 
 us without the hand-crafted intrinsic. (One problem is figuring out what HotSpot calls these intrinsics; I had to grep through the OpenJDK source code to find that this one is identified by `_hasNegatives`):
@@ -158,7 +158,7 @@ readStringDirect    4296.533  ± 870.060  ns/op
 
 The [intrinsic vectorization of `hasNegatives`](#appendix-internals-of-a-c2-intrinsic) is responsible for a greater than 4x speed-up in this simple benchmark. Cool!
 
-# Enter the InputStreamReader
+## Enter the InputStreamReader
 
 None of the above was fresh in my memory until recently. I wasn't involved in JEP 254, unless "enthusiastic onlooker" counts. But as it happened, I recently started doing some related experiments to assess performance overhead of `InputStreamReader`. Motivated by a sneaking suspicion after seeing a bit too much of it in an application profile. 
 
@@ -183,7 +183,7 @@ readStringDirect    1005.956  ±  36.044  ns/op
 readStringReader   12466.702  ± 747.116  ns/op
 ```
 
-## Analysis
+### Analysis
 
 A few experiments later it was clear that for smaller inputs `readStringReader` has a significant 
 constant overhead. Mainly from allocating a 8Kb `byte[]` used as an internal buffer. But it was also 
@@ -212,7 +212,7 @@ Digging into profiling data it was also clear that `readStringReader` spent most
 
 Having several branches on the hot path is a red flag - and might be the reason for the super-linear costs adding up.
 
-## Reuseable intrinsics
+### Reuseable intrinsics
 
 The solution feels obvious in hindsight: copying from `byte[]` to `char[]` was one of
 the things JEP 254 had to spend a lot of effort optimizing to ensure good performance. 
@@ -259,7 +259,7 @@ The `while`-loop in `US_ASCII$Decoder.decodeArrayLoop` could then be rewritten l
 
 Same semantics, but the bulk of the work will be delegated to the `decodeASCII` method, which should unlock some speed-ups thanks to the SIMD intrinsics. 
 
-## Results
+### Results
 
 Plotting the same graph as before with the optimized version paints a wholly different image:
 
@@ -317,7 +317,7 @@ I added a number of other microbenchmarks to explore how the microbenchmarks beh
 
 There are likely ways to improve the code further, especially when dealing with mixed input: when decoding into a `char[]` turning `String.decodeASCII` into an intrinsic that fuses `hasNegatives` + `inflate` could makes sense since we don't really have to bail out and restart when we find a negative `byte`. But this enhancement is great progress already, so I have resisted the temptation to reach for an additional gain. At least until the dust has settled a bit.
 
-## Real world implications?
+### Real world implications?
 
 One user approached me about testing this out in one of their application, since they had seen heavy use 
 of `decodeArrayLoop` in their profiles. After building the OpenJDK PR from source, they could test out the
@@ -327,11 +327,11 @@ _But_... it turned out I/O was often the bottleneck in their setup. So while CPU
 
 In the end I think the user in question seemed quite happy with the CPU reduction alone, even if it didn't improve their throughput much. If nothing else this should translate into power and cost savings.
 
-# Acknowledgements
+## Acknowledgements
 
 I'd like to especially thank Tobias Hartmann for helping out with many of the questions I had when writing this post. I also owe a debt of gratitude to him alongside Vivek Deshpande, Vladimir Kozlov, and Sandhya Viswanathan for their excellent work on these HotSpot intrinsics that I here was merely able to leverage in a few new places. Also thanks to Alan Bateman and Naoto Sato for reviewing, discussing and helping get the PR integrated, and to David Delabassee for a lot of editorial suggestions.
 
-# Appendix: Internals of a C2 intrinsic
+## Appendix: Internals of a C2 intrinsic
 
 I was curious to find out if my reading of the disassembly made sense, but couldn't find my way around. The C2 code is tricky to find your way around, mainly due heavy reliance on code generation, but Tobias Hartmann - who I believe wrote much of this particular intrinsic - was kind enough to point me to the right place: [`C2_MacroAssembler::has_negatives`](https://github.com/openjdk/jdk/blob/d7eebdac5d0bfc91acdb301d7c61ad7314f7ddd7/src/hotspot/cpu/x86/c2_MacroAssembler_x86.cpp#L3308).
 
