@@ -111,16 +111,16 @@ One of the intrinsics I had looked at earlier is the one used to "compress" `cha
             }
 ```
 
-Simply scan the input until we find a non-ASCII character, then use the `StringUTF16.compress` method (which I here exposed as `JavaLangAccess.compressCharsToBytes`). 
+That is: scan the input `char`s until we find a non-ASCII character, then use the `StringUTF16.compress` method (which I here exposed as `JavaLangAccess.compressCharsToBytes`) to compress-copy that to the destination. 
 
-Even though the scan for non-ASCII isn't vectorized with something similar to `StringCoding.hasNegatives`, this tweak meant a sizable speed-up: 1.45x in Carter Kozak's microbenchmark, and almost 1.65x on `CharsetEncodeDecode.encode`:
+Even though the scan for non-ASCII isn't explicitly vectorized with something similar to `StringCoding.hasNegatives`, this tweak still meant a sizable speed-up on my system: a 1.45x in Carter Kozak's microbenchmark, and almost 1.65x on `CharsetEncodeDecode.encode`:
 
 ```
       (type)  Mode  Cnt  Score   Error  Units
        UTF-8  avgt   30  7.134 ± 0.336  us/op
 ```
 
-Great! But the fully intrinsified ISO-8859-1 encoding was still much faster. 
+Good! But the fully intrinsified ISO-8859-1 encoding was still much faster.
 
 ### He's going for speed
 
