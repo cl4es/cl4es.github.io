@@ -7,7 +7,7 @@ tags:
 ---
 
 
-TL;DR: `CharsetDecoder`s got several times faster in JDK 17, leaving `CharsetEncoder` behind. After a few false starts and some help from the community I found a trick to speed up `CharsetEncoder`s similarly. This may or may not speed up your apps in the future. 
+TL;DR: `CharsetDecoder`s got several times faster in JDK 17, leaving `CharsetEncoder`s behind. After a few false starts and some help from the community I found a trick to speed up `CharsetEncoder`s similarly. This may or may not speed up your apps in the future. 
 
 This is a technical read, but also a story about the process of failing and trying again, with no graphs and lots of distracting links to source code. Sorry. But there will be cake.
 
@@ -174,6 +174,6 @@ A huge drop in user time - as expected - but also a significant speed-up on real
 
 I've only implemented this optimization on x86. I'm not very good at reading assembler code (assembly?) on any platform, much less writing it. I really got lucky when spotting a straightforward way to fix the x86 routine. I've filed a follow-up bug to get it fixed on Aarch64 and it's being looked at by people who should know what they're doing.
 
-I've also taken a look at some of the encodings in that Top 10 list and seen that at least some of them actually are ASCII-compatible. I have a patch for the EUC-JP encoding.
+I've also taken a look at some of the encodings in that Top 10 list and seen that at least some of them actually are ASCII-compatible, just implemented differently. I have a patch the EUC-JP encoding and are looking at a few of  the others.
 
-And finally I think this work should be both impactful, safe and easy enough to get backported to at least 17u. While it ended up improving over the JDK 8 - the most baseline of baselines - it also resolves some regressions against the same.
+And finally I think this work should be impactful, safe and uncontroversial to backport 17u: While it ended up being a large improvement over JDK 8 - the most baseline of baselines - it also resolved some regressions.
