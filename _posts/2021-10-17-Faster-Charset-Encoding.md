@@ -23,7 +23,7 @@ I have grown up using [ISO 8859-1](https://en.wikipedia.org/wiki/ISO/IEC_8859-1)
 
 ### Performance check: JDK 17
 
-Let's take [`CharsetEncodeDecode`](https://github.com/openjdk/jdk17u/blob/master/test/micro/org/openjdk/bench/java/nio/CharsetEncodeDecode.java) - a naive microbenchmark for testing `CharsetDecoder` and `CharsetEncoder` performance using ASCII-only data. We can pick which encodings to tests, so let's check the most common ones. According to [W3Techs.com](https://w3techs.com/technologies/overview/character_encoding) these are the top 10 used on public websites (ran using the [Oracle OpenJDK 17](http://jdk.java.net/17/) bits on my x86 workstation):
+Let's take [`CharsetEncodeDecode`](https://github.com/openjdk/jdk17u/blob/master/test/micro/org/openjdk/bench/java/nio/CharsetEncodeDecode.java) - a naive microbenchmark for testing `CharsetDecoder` and `CharsetEncoder` performance using ASCII-only data. We can pick which encodings to test, so let's go with the most common ones. According to [W3Techs.com](https://w3techs.com/technologies/overview/character_encoding) these are the top 10 used on public websites (ran using the [Oracle OpenJDK 17](http://jdk.java.net/17/) bits on my x86 workstation):
 
 ```
 CharsetEncodeDecode.encode:
@@ -50,7 +50,7 @@ The UTF-8 encoder does have a helpful [ASCII fast-path](https://github.com/openj
                 da[dp++] = (byte) sa[sp++];
 ```
 
-Any charset that is ASCII-compatible would probably benefit from doing the same, but most are somewhat surprisingly missing such fast-paths.
+Any charset that is ASCII-compatible would likely benefit from doing the same, but most are somewhat surprisingly missing such fast-paths.
 
 Regardless: any encoding that is ASCII-compatible (and produce a single byte stream when encoding ASCII) is essentially doing the same thing in this benchmark, but ending up with vastly different results. The difference is that ISO-8859-1 intrinsic, which speeds up ISO-8859-1 and ISO-8859-1 alone. That's not very nice, but that's how it's been since JDK 8.
 
