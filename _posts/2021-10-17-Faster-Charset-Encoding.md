@@ -126,17 +126,17 @@ Great! But the fully intrinsified ISO-8859-1 encoding was still much faster.
 
 So I took a long hard look at what that ISO-8859-1 intrinsic actually does. Then it finally dawned upon me. That thing that in hindsight is so obvious.
 
-On x86, `implEncodeISOArray` is [implemented](https://github.com/openjdk/jdk17u/blob/master/src/hotspot/cpu/x86/macroAssembler_x86.cpp#L5630) by setting up a bitmask made up of `0xFF00` repeated 8, 16 or 32 times (depending on hardware capabilities). As long as the bitmask detects no bits set when OR:ing against a chunk of `char`s that means that all those `char`s can be ISO-8859-1-encoded.
+On x86, `implEncodeISOArray` is [implemented](https://github.com/openjdk/jdk17u/blob/master/src/hotspot/cpu/x86/macroAssembler_x86.cpp#L5630) by setting up a bitmask made up of `0xFF00` repeated 8, 16 or 32 times (depending on hardware capabilities). As long as there are no bits detected when OR:ing that bitmask against a chunk of `char`s that means that all those `char`s can be ISO-8859-1-encoded.
 
-Every chunk that pass through the filter will be subject to some AVX magic copies every other byte to the destination. (`vpackuswb` + `vpermq` = yeah, no, I get it but I also don't.) Thankfully that part isn't something we have to care about. All that needs to be different for our needs are those bitmasks. And those were easy enough for me to spot. 
+Every chunk that pass through the filter will be subject to some AVX magic to copy every other byte to the destination. (`vpackuswb` + `vpermq` = yeah, no, I get it but also don't.) Thankfully that part isn't something we have to care about. All that needs to be different for our needs are those bitmasks. And those were easy enough to spot.
 
-All we need is the exact same thing, but with a different bitmask. One that would detect any non-ASCII `char`s `0xFF80`.
+What we need is the exact same thing, but with a different bitmask. One that would detect any non-ASCII `char`s:`0xFF80`.
 
-It took me a few hours of furiously copy-pasting code from various places in the C2 code base to get it all up and running but finally everything seemed properly duct-taped together and I had created a new, very derivative, intrinsic: `_encodeAsciiArray`. It's all there in the [PR changelog](https://github.com/openjdk/jdk/pull/5621/commits/cef05f44fd482646c5df496a50bdf78527d908cb), redundant scaffolding included.
+It took me a few hours of furiously copy-pasting code from various places in the C2 code to get it all up and running but finally everything seemed properly duct-taped together and I had created a new, very derivative, intrinsic: `_encodeAsciiArray`. That first version is all there in the [PR changelog](https://github.com/openjdk/jdk/pull/5621/commits/cef05f44fd482646c5df496a50bdf78527d908cb), hacks and redundant scaffolding included.
 
 But it worked!
 
-After cleaning up the intrinsic implementation (thanks to some much needed input from [Tobias Hartmann](https://twitter.com/TobiasJava)!) and making sure most ASCII-compatible charsets gets the magic treatment then numbers look almost too good to be true:
+After cleaning up the implementation (thanks to some much needed input from [Tobias Hartmann](https://twitter.com/TobiasJava)! and making sure most ASCII-compatible charsets ges the same treatment then numbers look almost too good to be true:
 
 ```
 CharsetEncodeDecode.encode:
@@ -176,4 +176,4 @@ I've only implemented this optimization on x86. I'm not very good at reading ass
 
 I've also taken a look at some of the encodings in that Top 10 list and seen that at least some of them actually are ASCII-compatible. I have a patch for the EUC-JP encoding.
 
-And finally I think this work should be both impactful, safe and easy enough to get backported to 17u. While it ended up improving over the JDK 8 baseline, it also resolves some regressions against 8 - the most baseline of baselines.
+And finally I think this work should be both impactful, safe and easy enough to get backported to at least 17u. While it ended up improving over the JDK 8 - the most baseline of baselines - it also resolves some regressions against the same.
