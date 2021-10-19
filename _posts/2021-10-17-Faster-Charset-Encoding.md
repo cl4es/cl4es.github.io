@@ -74,7 +74,7 @@ The issue boils down to `String.getBytes(UTF8)` being much faster than using a `
 
 A nicely written, well-defined microbenchmark? And a noticable regression on some variants? Caused by one of the best performance features in JDK 9? OK, I'm in!
 
-### Zooming in on the core issue
+### Reluctantly crouched at the starting line
 
 Since Compact Strings `String.getBytes` has specialized implementations to encode to some built-in charsets such as UTF-8 and ISO-8859-1. These can be hard to beat since all `String`s that can be will be represented internally in a ISO-8859-1 binary format. Encoding to ISO-8859-1 from such a `String` means a simple `Arrays.copyOf`. Encoding to UTF-8 _can_ be an array copy, too, if your `String` is [all ASCII](https://github.com/openjdk/jdk17u/blob/aabc4ba0eef9e47fc547b4ec91153a9427acd968/src/java.base/share/classes/java/lang/String.java#L1264):
 
