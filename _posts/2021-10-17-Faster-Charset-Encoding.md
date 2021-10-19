@@ -130,7 +130,7 @@ On x86, `implEncodeISOArray` is [implemented](https://github.com/openjdk/jdk17u/
 
 Every chunk that pass through the filter will be subject to some AVX magic to copy every other byte to the destination. (`vpackuswb` + `vpermq` = yeah, no, I get it but also don't.) Thankfully that part isn't something we have to care about. All that needs to be different for our needs are those bitmasks. And those were easy enough to spot.
 
-What we need is the exact same thing, but with a different bitmask. One that would detect any non-ASCII `char`s:`0xFF80`.
+So what we need here is the exact same thing, but with a (repeated) bitmask that would detect any non-ASCII `char`:`0xFF80`.
 
 It took me a few hours of furiously copy-pasting code from various places in the C2 code to get it all up and running but finally everything seemed properly duct-taped together and I had created a new, very derivative, intrinsic: `_encodeAsciiArray`. That first version is all there in the [PR changelog](https://github.com/openjdk/jdk/pull/5621/commits/cef05f44fd482646c5df496a50bdf78527d908cb), hacks and redundant scaffolding included.
 
