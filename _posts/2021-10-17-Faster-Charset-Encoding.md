@@ -177,3 +177,16 @@ I've only implemented this optimization on x86. I'm not very good at reading ass
 I've also taken a look at some of the encodings in that Top 10 list and seen that at least some of them actually are ASCII-compatible, just implemented differently. I have a patch the EUC-JP encoding and are looking at a few of  the others.
 
 And finally I think this work should be impactful, safe and uncontroversial to backport 17u: While it ended up being a large improvement over JDK 8 - the most baseline of baselines - it also resolved some regressions.
+
+### Edit 2021-10-15: DoubleByte encodings
+
+It turns out most of the encodings that didn't see a speed-up above implements `DoubleByte` and are marked ASCII-compatible - which means they actually encode ASCII as single-byte. Thus getting those up to speed was actually easier than I thought. Ironically the first one I took a look at - EUC-JP - was an exception that took some extra care. I have prepared a PR ([#6102](https://github.com/openjdk/jdk/pull/6102)) that improve all the Top 10 encodings to within a small factor of ISO-8859-1:
+
+```
+Benchmark                   (size)      (type)  Mode  Cnt  Score   Error  Units
+CharsetEncodeDecode.encode   16384  ISO-8859-1  avgt   30  2.856 ± 0.078  us/op
+CharsetEncodeDecode.encode   16384   Shift-JIS  avgt   30  5.287 ± 0.209  us/op
+CharsetEncodeDecode.encode   16384      GB2312  avgt   30  5.490 ± 0.251  us/op
+CharsetEncodeDecode.encode   16384      EUC-JP  avgt   30  7.657 ± 0.368  us/op
+CharsetEncodeDecode.encode   16384      EUC-KR  avgt   30  5.718 ± 0.267  us/op
+```
