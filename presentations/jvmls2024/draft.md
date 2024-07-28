@@ -1,4 +1,12 @@
-# Re-thinking concatenation
+---
+layout: post
+title: "Re-thinking concatenation"
+author: "cl4es"
+tags:
+- junk
+---
+
+## Pitch:
 JDK 9 introduced a way to dynamically decide how to concatenate `String`s through JEP 280.
 This brought potential throughput improvements, but also some startup woes. In certain
 situations the dynamic, `MethodHandle`-based implementation can generate scores of classes
