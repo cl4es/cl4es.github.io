@@ -181,6 +181,8 @@ for what's going on:
 As the `MethodHandle` expression tree grows we eventually ran into issues with JIT compilers taking too much time
 to compile them: [JDK-8327247: C2 uses up to 2GB of RAM to compile complex string concat in extreme cases](https://bugs.openjdk.org/browse/JDK-8327247) 
 
+
+
 As a quick and dirty fix we opted to bring back code which spins a class per concatenation for sufficiently complex expressions.
 
 This code is not very optimized. It effectively generates code similar to what javac would, with the crucial distinction
@@ -230,9 +232,9 @@ config:
             plotColorPalette: "#4344A3, #B34443" 
 ---
 xychart-beta horizontal
-  title "StringConcat"
-  x-axis [concat123String, concat13String, concat23String, concat23StringConst, concat4String, concat6String, concatConst2String, concatConst4String, concatConst6Object, concatConst6String, concatConstBoolByte, concatConstInt, concatConstIntConstInt, concatConstString, concatConstStringConstInt, concatEmptyConstInt, concatEmptyConstString, concatEmptyLeft, concatEmptyRight, concatMethodConstString, concatMix4String          ]
-  y-axis 0.04 --> 3
+  title "StringConcat JMH microbenchmark, speed-up factor"
+  x-axis [concat123String, concat13String, concat23String, concat23StringConst, concat4String, concat6String, concatConst2String, concatConst4String, concatConst6Object, concatConst6String, concatConstBoolByte, concatConstInt, concatConstIntConstInt, concatConstString, concatConstStringConstInt, concatEmptyConstInt, concatEmptyConstString, concatEmptyLeft, concatEmptyRight, concatMethodConstString, concatMix4String]
+  y-axis 0.04 --> 3.2
   bar [0.87, 1.39, 0.85, 0.91, 1.43, 1.56, 1.64, 1.73, 1.72, 1.74, 2.69, 1.62, 1.62, 1.33, 1.68, 1.15, 2.40, 3.02, 2.98, 1.00, 1.47]
   line [1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0, 1.0,  1.0]
 ```
@@ -305,13 +307,30 @@ Delegating to the runtime to generate code shape leaves us free to experiment an
 optimize the code without a need to recompiling the java code with a patched javac. The static bytecode 
 remains unchanged.
 
-## Leyden to the rescue!
+## Lingering woes
 
 So while things have improved since JDK 9 there is still a hefty cost of spinning up complex
 concat expressions. 
 
 That 46ms overhead number I blogged about for JDK all those years ago more or less persist on the same hardware setup.
 
+When working on PR#19927 I realized none of the `String` concat stress tests I've experimented with were added to the 
+OpenJDK, so I've added a couple of JMH:ified variants in `StringConcatStartup`. Running this stand-alone with `perf stat -r 10` 20 times and collecting the results
+yields this result:
+
+```
+Name                  Cnt           Base           Error
+StringConcatStartup    20        238,000 ±         6,667
+  :.cycles                2432315862,050 ±  54176897,441
+  :.instructions          5762516585,300 ± 129310503,641
+  :.taskclock                    785,500 ±        15,806
+* = significant
+```
+
+Add to this the aforementioned `StringBuilder` fallback where we opt out of the optimized concatenation for high-arity
+
+
+## Leyden to the rescue!
 Ioi Lam has done great work within Project Leyden to allow pre-resolving 
 `String` concat expressions as produced by the `StringConcatFactory`, storing them in the Leyden AOT archive and reconstituting
 the final `MethodHandle` from the archive when linking the callsite. Basically short-cutting the `StringConcatFactory` entirely:
@@ -332,6 +351,12 @@ will go through the `StringConcatFactory`, potentially spinning a significant am
 
 It's anyone's guess what concat callsite capture rate leyden deployments will have, so it still seems prudent to improve
 on the status quo. 
+
+Another issue with the current implementation is that it scales poorly if we want to improve on type specialization.
+In the current model javac emits exactly typed invocations to the `StringConcatFactory` bootstrap method, and the returned
+method handle is adapted to the exact type - even though the `MethodHandle` currently produced by the factory only cares
+about (some) primitive types and `Object`. We could specialize more exactly but shy away from this since each added 
+specialization exponentially increases the potential number of `LambdaForm` classes that could be generated.
 
 ## Remodeling to spin classes
 
@@ -370,7 +395,7 @@ a String and an int:
     private final String c1;
     private final String c2;
     private final long initialCoder;
-    StringConcatExample(String[] constants) {
+    GeneratedStringConcat(String[] constants) {
         long initialCoder = StringConcatHelper.initialCoder();
         c0 = constants[0];
         initialCoder = StringConcatHelper.mix(initialCoder, c0);
@@ -390,13 +415,12 @@ a String and an int:
         lengthCoder = StringConcatHelper.mix(lengthCoder, s0);
         lengthCoder = StringConcatHelper.mix(lengthCoder, i1);
 
-        byte[] buf = StringConcatHelper.newArray(lengthCoder);
+        // prepend from the end
+        byte[] buf = StringConcatHelper.newArray(lengthCoder, c2);
 
-        lengthCoder = StringConcatHelper.prependEmptyIfNull(lengthCoder, buf, c0);
-        lengthCoder = StringConcatHelper.prepend(lengthCoder, buf, s0);
-        lengthCoder = StringConcatHelper.prependEmptyIfNull(lengthCoder, buf, c1);
-        lengthCoder = StringConcatHelper.prepend(lengthCoder, buf, i1);
-        lengthCoder = StringConcatHelper.prependEmptyIfNull(lengthCoder, buf, c2);
+        // prepend from the end
+        lengthCoder = StringConcatHelper.prepend(lengthCoder, buf, c1, i1);
+        lengthCoder = StringConcatHelper.prepend(lengthCoder, buf, c0, s0);
         return StringConcatHelper.newString(buf, lengthCoder);
     }
 ```
@@ -429,48 +453,46 @@ Let `StringConcatHelper` redefine `mixer` to only deal with `length` and retain 
     private final String c2;
     private final int length;
     private final byte coder;
-    StringConcatExample(String[] constants) {
+    GeneratedStringConcat(String[] constants) {
         byte coder = String.COMPACT_STRINGS ? String.LATIN1 : String.UTF16;
         int length = 0;
 
         c0 = constants[0];
         coder |= c0;
         length = StringConcatHelper.mix(length, c0); // check for overlow
-        
-        c1 = constants[1];
-        coder |= c1;
-        length = StringConcatHelper.mix(length, c1);
-
-        c2 = constants[2];
-        coder |= c2;
-        length = StringConcatHelper.mix(length, c1);
+        ...
 
         this length = length;
         this.coder = coder;
     }
 
     // Concatenates an expression "prefix" + foo + "constant" + bar + "suffix" 
-    String concat(Object o0, int i1) {
+    String doConcat(Object o0, int i1) {
         // Stringify Object, float, double args:
         String s0 = StringConcatHelper.stringOf(o0);
         
         // Only string(ified) args can mutate initial coder
-        int coder = this.coder | s0.coder(); // hey, we're hidden in java.lang!
-        
+        int coder = this.coder | s0.coder(); // we're inside java.lang, which gives access to package-private
+
         // Mix in lengths
         int length = this.length;
         length = StringConcatHelper.mix(length, s0);
         length = StringConcatHelper.mix(length, i1);
         
-        byte[] buf = StringConcatHelper.newArray(length, coder);
-
-        length = StringConcatHelper.prependEmptyIfNull(length, coder, buf, c0);
-        length = StringConcatHelper.prepend(length, coder, buf, foo);
-        length = StringConcatHelper.prependEmptyIfNull(length, coder, buf, c1);
-        length = StringConcatHelper.prepend(length, coder, buf, bar);
-        length = StringConcatHelper.prependEmptyIfNull(length, coder, buf, c2);
+        // prepend from the end
+        byte[] buf = StringConcatHelper.newArray(length, coder, c2);
+                
+        // prepend from the end
+        length = StringConcatHelper.prepend(length, coder, buf, c1, i1);
+        length = StringConcatHelper.prepend(length, coder, buf, c0, s0);
         return StringConcatHelper.newString(buf, length, coder);
     }
 ```
-Perhaps a bit more code in the `concat` method, but not having to pack and unpack the coder at every mixer and prepend step 
-should make it more straightforward and easier for the compilers to optimize.
+
+Splitting explands the code a bit more in both the constructor and the `concat` method, but not having to pack and
+unpack the coder at every mixer and prepend step should make it more straightforward and easier for the compilers to 
+optimize.
+
+## Detour
+
+
