@@ -662,7 +662,7 @@ config:
 ---
 xychart-beta
   title "Strings stress test, classes loaded"
-  x-axis [Baseline, pr#20273]
+  x-axis [Baseline, Prototype]
   y-axis 0 --> 18000
   bar [13888, 17042]
 ```
