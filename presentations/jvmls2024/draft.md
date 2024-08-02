@@ -6,27 +6,6 @@ tags:
 - junk
 ---
 
-# Pitch:
-JDK 9 introduced a way to dynamically decide how to concatenate `String`s through JEP 280.
-This brought potential throughput improvements, but also some startup woes. In certain
-situations the dynamic, `MethodHandle`-based implementation can generate scores of classes
-to build up the expression tree - adding startup time and runtime footprint. These complex
-expression trees may turn into a challenge for JIT compilers.
-In the meantime there has been various improvements that could be leveraged. The new
-ClassFile API makes spinning bytecode more convenient than ever. Hidden classes mean we
-can define shareable, unloadable classes inside a privileged package, so perhaps it’s time to
-rethink how to indify string concatenation with a goal of matching the performance of the
-current best strategy, while generating less code and taking less time - at all levels - to get
-there.
-Suggested talk highlights
-- Detail current issues with the String concat factory
-- Lots of unused, intermediary LF classes are generated, visible in realistic cases, and possible to generate thousands of classes in stress tests
-- We recently had to revert to a simple ClassFile API-based implementation for huge expressions (arity >= 20) since they could otherwise overwhelm C2. Such expressions now end up slightly less performance and with at least a single class per concat call-site.
-- Touch on some past optimizations and improvements (lots of progress from 9 -> 17)
-- Touch on some current but parked attempts at reducing cost of intermediary LF class spinning
-- Demonstrate a more thorough rewrite using the ClassFile API, leveraging hidden classes to enable direct access to package-protected java.lang APIs. Ideally complex MH expression trees are replaced with cachable, sharable classes
-- Define some tests, benchmarks, produce performance results, JEP(?)/RFE proposal, applause!
-
 # Introduction
 
 JDK 9 introduced a way to dynamically decide how to concatenate Strings through JEP 280.
@@ -642,13 +621,14 @@ xychart-beta
 Prototyping continues to see if we can get something that performs well at peak, starts up fast and 
 scales nicely.
 
-# Prototype
+# Full-fledged prototype
 
 I have a rough, draft prototype that generates a shareable class and 
 puts it in a cache. As I've baselined on PR#20273 the PoC temporarily 
 resides here: https://github.com/wenshao/jdk/pull/9
 
-It performs reasonably well throughput metrics as well as on the 4-arity stress test.
+It performs well on micros. We're even beating the 
+current MH-based on some of the micros.
 
 ```mermaid
 ---
@@ -661,9 +641,53 @@ config:
             plotColorPalette: "#4344A3, #B34443" 
 ---
 xychart-beta
-  title "Strings stress test, classes loaded"
-  x-axis [Baseline, Prototype]
-  y-axis 0 --> 18000
-  bar [13888, 17042]
+  title "StringConcat.concatMix4String, ns/op"
+  x-axis [MH-Baseline, SB-Baseline, Prototype]
+  y-axis 0 --> 125
+  bar [94.172, 99.163, 73.405]
 ```
+
+Startup tests show promising gains:
+
+```
+Name                            Cnt    Base    Error     Test    Error  Unit  Change
+MixedLarge.run                   10 357,285 ± 41,059  167,322 ± 56,867 ms/op   2,14x (p = 0,000*)
+MixedSmall.run                   20  25,464 ±  0,777    8,287 ±  0,448 ms/op   3,07x (p = 0,000*)
+StringLarge.run                  10  93,364 ±  5,002   38,273 ± 26,590 ms/op   2,44x (p = 0,000*)
+StringSingle.constBool           40   2,887 ±  2,490    1,408 ±  0,072 ms/op   2,05x (p = 0,041 )
+StringSingle.constBoolString     40   0,288 ±  0,026    1,082 ±  0,140 ms/op   0,27x (p = 0,000*)
+StringSingle.constBoolean        40   0,165 ±  0,016    0,133 ±  0,009 ms/op   1,24x (p = 0,000*)
+StringSingle.constBooleanString  40   3,816 ±  0,165    1,318 ±  0,059 ms/op   2,90x (p = 0,000*)
+StringSingle.constFloat          40   2,785 ±  0,120    1,515 ±  0,066 ms/op   1,84x (p = 0,000*)
+StringSingle.constFloatString    40   5,268 ±  2,117    1,779 ±  0,070 ms/op   2,96x (p = 0,000*)
+StringSingle.constInt            40   2,178 ±  0,127    1,336 ±  0,059 ms/op   1,63x (p = 0,000*)
+StringSingle.constIntString      40   0,183 ±  0,027    0,107 ±  0,011 ms/op   1,72x (p = 0,000*)
+StringSingle.constInteger        40   0,155 ±  0,015    0,147 ±  0,013 ms/op   1,06x (p = 0,151 )
+StringSingle.constIntegerString  40   3,750 ±  0,164    1,348 ±  0,064 ms/op   2,78x (p = 0,000*)
+StringSingle.constString         40   0,166 ±  0,017    0,141 ±  0,011 ms/op   1,18x (p = 0,000*)
+StringThree.stringIntString      40   6,939 ±  1,475    2,296 ±  1,120 ms/op   3,02x (p = 0,000*)
+StringThree.stringIntegerString  40   6,066 ±  2,076    1,494 ±  0,346 ms/op   4,06x (p = 0,000*)
+  * = significant
+```
+
+There's some overhead on the 4-arity startup stress test, where
+we generate around 6,500 classes compared to ~3,500 classes for the 
+baseline implementation. Much better than 320,000, though! 
+
+Main difference
+is that we're generating distinct classes when there are `float` or `double`
+arguments, and perhaps using the stringifier trick to pre-process those 
+arguments and turn them into `String` means we can make do with fewer classes
+total. 
+
+# Conclusions
+
+Building up complex logic from small building blocks using `MethodHandles` has proven 
+performance characteristics, but has challenges with overhead and code complexity can 
+be punishing for JITs as we scale things up. 
+
+Generating hidden classes into privileged packages from bootstrap methods gives access 
+to privileged APIs and unlocks similar performance as the current-best `MH`-based approach, 
+at lower deployment and warmup cost. And arguably this code is easier to understand, maintain and 
+improve.
 
