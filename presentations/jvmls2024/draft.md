@@ -623,7 +623,7 @@ scales nicely.
 
 # Full-fledged prototype
 
-I have a rough, draft prototype that generates a shareable class and 
+I took a stab at fleshing out Shaojin's approach with a rough, draft prototype that generates a shareable class and 
 puts it in a cache. As I've baselined on PR#20273 the PoC temporarily 
 resides here: https://github.com/wenshao/jdk/pull/9
 
@@ -682,12 +682,13 @@ total.
 
 # Conclusions
 
-Building up complex logic from small building blocks using `MethodHandles` has proven 
-performance characteristics, but has challenges with overhead and code complexity can 
-be punishing for JITs as we scale things up. 
+Building up complex logic from small building blocks using `MethodHandles` transforms - as done by JEP 280 - has proven 
+throughput performance, but has challenges with startup overheads and code complexity for larger expressions which can 
+be cumbersome for JITs. 
 
 Generating hidden classes into privileged packages from bootstrap methods gives access 
 to privileged APIs and unlocks similar performance as the current-best `MH`-based approach, 
-at lower deployment and warmup cost. And arguably this code is easier to understand, maintain and 
-improve.
+at lower deployment and warmup cost.
 
+A hybrid approach where we generate as few classes as possible by leveraging `MethodHandles` for things that it's good at,
+such as filtering and adapting arguments, will end up being the best overall implementation.
