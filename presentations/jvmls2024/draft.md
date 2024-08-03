@@ -623,12 +623,11 @@ scales nicely.
 
 # Full-fledged prototype
 
-I took a stab at fleshing out Shaojin's approach with a rough, draft prototype that generates a shareable class and 
-puts it in a cache. As I've baselined on PR#20273 the PoC temporarily 
-resides here: https://github.com/wenshao/jdk/pull/9
+I started out from Shaojin's approach with and prototype a version which generates a shareable class and 
+puts it in a cache. It's now been merged back into PR#20273, but 
 
 It performs well on micros. We're even beating the 
-current MH-based on some of the micros.
+current MH-based on some of the micros, though it regresses a bit on others.
 
 ```mermaid
 ---
@@ -647,35 +646,36 @@ xychart-beta
   bar [94.172, 99.163, 73.405]
 ```
 
-Startup tests show promising gains:
+Startup tests show compelling improvements with more substantial tests taking 60-70% less time:
 
 ```
-Name                            Cnt    Base    Error     Test    Error  Unit  Change
-MixedLarge.run                   10 357,285 ± 41,059  167,322 ± 56,867 ms/op   2,14x (p = 0,000*)
-MixedSmall.run                   20  25,464 ±  0,777    8,287 ±  0,448 ms/op   3,07x (p = 0,000*)
-StringLarge.run                  10  93,364 ±  5,002   38,273 ± 26,590 ms/op   2,44x (p = 0,000*)
-StringSingle.constBool           40   2,887 ±  2,490    1,408 ±  0,072 ms/op   2,05x (p = 0,041 )
-StringSingle.constBoolString     40   0,288 ±  0,026    1,082 ±  0,140 ms/op   0,27x (p = 0,000*)
-StringSingle.constBoolean        40   0,165 ±  0,016    0,133 ±  0,009 ms/op   1,24x (p = 0,000*)
-StringSingle.constBooleanString  40   3,816 ±  0,165    1,318 ±  0,059 ms/op   2,90x (p = 0,000*)
-StringSingle.constFloat          40   2,785 ±  0,120    1,515 ±  0,066 ms/op   1,84x (p = 0,000*)
-StringSingle.constFloatString    40   5,268 ±  2,117    1,779 ±  0,070 ms/op   2,96x (p = 0,000*)
-StringSingle.constInt            40   2,178 ±  0,127    1,336 ±  0,059 ms/op   1,63x (p = 0,000*)
-StringSingle.constIntString      40   0,183 ±  0,027    0,107 ±  0,011 ms/op   1,72x (p = 0,000*)
-StringSingle.constInteger        40   0,155 ±  0,015    0,147 ±  0,013 ms/op   1,06x (p = 0,151 )
-StringSingle.constIntegerString  40   3,750 ±  0,164    1,348 ±  0,064 ms/op   2,78x (p = 0,000*)
-StringSingle.constString         40   0,166 ±  0,017    0,141 ±  0,011 ms/op   1,18x (p = 0,000*)
-StringThree.stringIntString      40   6,939 ±  1,475    2,296 ±  1,120 ms/op   3,02x (p = 0,000*)
-StringThree.stringIntegerString  40   6,066 ±  2,076    1,494 ±  0,346 ms/op   4,06x (p = 0,000*)
+Name                            Cnt    Base    Error     Test   Error  Unit  Change
+MixedLarge.run                   10 357,285 ± 41,059  151,936 ± 7,964 ms/op   2,35x (p = 0,000*)
+MixedSmall.run                   20  25,464 ±  0,777    7,490 ± 0,343 ms/op   3,40x (p = 0,000*)
+StringLarge.run                  10  93,364 ±  5,002   27,388 ± 1,423 ms/op   3,41x (p = 0,000*)
+StringSingle.constBool           40   2,887 ±  2,490    1,097 ± 0,059 ms/op   2,63x (p = 0,015 )
+StringSingle.constBoolString     40   0,288 ±  0,026    0,763 ± 0,041 ms/op   0,38x (p = 0,000*)
+StringSingle.constBoolean        40   0,165 ±  0,016    0,149 ± 0,009 ms/op   1,11x (p = 0,003*)
+StringSingle.constBooleanString  40   3,816 ±  0,165    1,029 ± 0,050 ms/op   3,71x (p = 0,000*)
+StringSingle.constFloat          40   2,785 ±  0,120    1,370 ± 0,493 ms/op   2,03x (p = 0,000*)
+StringSingle.constFloatString    40   5,268 ±  2,117    1,485 ± 0,077 ms/op   3,55x (p = 0,000*)
+StringSingle.constInt            40   2,178 ±  0,127    1,031 ± 0,044 ms/op   2,11x (p = 0,000*)
+StringSingle.constIntString      40   0,183 ±  0,027    0,106 ± 0,007 ms/op   1,72x (p = 0,000*)
+StringSingle.constInteger        40   0,155 ±  0,015    0,143 ± 0,009 ms/op   1,09x (p = 0,014 )
+StringSingle.constIntegerString  40   3,750 ±  0,164    0,994 ± 0,051 ms/op   3,77x (p = 0,000*)
+StringSingle.constString         40   0,166 ±  0,017    0,137 ± 0,008 ms/op   1,21x (p = 0,000*)
+StringThree.stringIntString      40   6,939 ±  1,475    1,616 ± 0,120 ms/op   4,29x (p = 0,000*)
+StringThree.stringIntegerString  40   6,066 ±  2,076    1,093 ± 0,064 ms/op   5,55x (p = 0,000*)
   * = significant
 ```
 
-There's some overhead on the 4-arity startup stress test, where
-we generate around 6,500 classes compared to ~3,500 classes for the 
-baseline implementation. Much better than 320,000, though! 
+There's still some overhead showing on the 4-arity startup stress test the existing solution
+actually generates fewer classes here than there are distinct shapes. The latest version 
+generates around 6,500 classes compared to ~3,500 classes for the 
+baseline implementation. The wall clock times are more or less
+the same, though.
 
-Main difference
-is that we're generating distinct classes when there are `float` or `double`
+Main difference comes from doing distinct logic when there are `float` or `double`
 arguments, and perhaps using the stringifier trick to pre-process those 
 arguments and turn them into `String` means we can make do with fewer classes
 total. 
