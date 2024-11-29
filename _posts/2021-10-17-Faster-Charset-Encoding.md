@@ -64,11 +64,11 @@ With no real regression in sight other things took priority. I also went on pare
 
 ### Nudged back into the game
 
-Sometimes the reason to take a second look comes from surprising places. Including Twitter:
+Sometimes the reason to take a second look comes from surprising places. Including Twitter (R.I.P.):
 
-<blockquote class="twitter-tweet"><p lang="en" dir="ltr"><a href="https://twitter.com/cl4es?ref_src=twsrc%5Etfw">@cl4es</a> any chance you could provide insight into this based on your (much appreciated) work with strings/encoding/decoding?<br>We&#39;re encoding from a reused StringBuilder into a reused ByteBuffer, sb.toString().getBytes(cs) is much faster in the non-unicode case on hot paths!</p>&mdash; Carter Kozak (@carter_kozak) <a href="https://twitter.com/carter_kozak/status/1433798391604162561?ref_src=twsrc%5Etfw">September 3, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+> @cl4es any chance you could provide insight into this based on your (much appreciated) work with strings/encoding/decoding?<br>We&#39;re encoding from a reused StringBuilder into a reused ByteBuffer, sb.toString().getBytes(cs) is much faster in the non-unicode case on hot paths!</p>&mdash; Carter Kozak (@carter_kozak)  
 
-(Maybe _someone_ reads my blog!?) I also got a few pings from others who seemed anxious to hear if I had found a solution to their woes (Hi, [@yazicivo](https://twitter.com/yazicivo)!).
+(Maybe _someone_ reads my blog!?) I also got a few pings from others who seemed anxious to hear if I had found a solution to their woes (Hi, @yazicivo!).
 
 The issue boils down to `String.getBytes(UTF8)` being much faster than using a `CharsetEncoder` - even when the usage of the latter involves reusing `CharBuffer`s and `ByteBuffer`s to be essentially allocation-free. My initial guess-work as to why this was was way off the mark, but the conversation led to a JMH [test case](https://github.com/carterkozak/stringbuilder-encoding-performance/pull/4) which demonstrated the core issue. The reported performance issue was mostly a discrepancy between JDK 8 and later JDKs caused by a large _improvement_ in JDK 9 to certain `String` methods. But there also seemed to be some 5-10% regressions when comparing back to JDK 8 in some of these microbenchmarks.
 
@@ -136,7 +136,7 @@ It took me a few hours of furiously copy-pasting code from various places in the
 
 But it worked!
 
-After cleaning up the implementation (thanks to some much needed input from [Tobias Hartmann](https://twitter.com/TobiasJava)! and making sure most ASCII-compatible charsets ges the same treatment then numbers look almost too good to be true:
+After cleaning up the implementation (thanks to some much needed input from Tobias Hartmann! and making sure most ASCII-compatible charsets ges the same treatment then numbers look almost too good to be true:
 
 ```
 CharsetEncodeDecode.encode:

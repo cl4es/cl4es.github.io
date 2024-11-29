@@ -75,7 +75,7 @@ Around this time I found time to release a simple tool I had written to help inv
 
 I was looking at a small startup regression due the introduction of [condy](https://openjdk.java.net/jeps/309) when it dawned on me that much of the initial work done bootstrapping lambdas came was actually unnecessary - and there was an easy - but hacky - fix that reduced the overhead by 75%. 
 
-<blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I found a hack which reduce the one-off bootstrap overhead of using lambdas by ~75% (15ms or so): <a href="https://t.co/MdStfKDe8D">https://t.co/MdStfKDe8D</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/966318082137448449?ref_src=twsrc%5Etfw">21 februari 2018</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+I found a hack which reduce the one-off bootstrap overhead of using lambdas by ~75% (15ms or so): https://bugs.openjdk.org/browse/JDK-8198418
 
 How had I missed this for years?! 
 

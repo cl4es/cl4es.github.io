@@ -1,11 +1,11 @@
 title: Claes Redestad's blog
-author: Claes Redestad 
+author: Claes Redestad
 description:
   A blog about Java, OpenJDK and various performance related adventures thereabout.
 
 # social links
-twitter_username: cl4es
 github_username:  cl4es
+bluesky_username: cl4es.bsky.social
 
 show_excerpts: false
 baseurl: ""

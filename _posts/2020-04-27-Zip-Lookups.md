@@ -9,7 +9,7 @@ tags:
 
 This has been a fun few weeks, much thanks to this guy:
 
-<blockquote class="twitter-tweet"><p lang="en" dir="ltr">One positive outcome of social distancing is that I&#39;m now an <a href="https://twitter.com/OpenJDK?ref_src=twsrc%5Etfw">@OpenJDK</a> contributor! This patch saves 35% time on lookup of non-existing ZIP file entries: <a href="https://t.co/tKsy75qE0o">https://t.co/tKsy75qE0o</a> Thanks to <a href="https://twitter.com/cl4es?ref_src=twsrc%5Etfw">@cl4es</a> for awesome help and sponsoring!</p>&mdash; Eirik Bjørsnøs (@eirbjo) <a href="https://twitter.com/eirbjo/status/1251774366544773121?ref_src=twsrc%5Etfw">April 19, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+> One positive outcome of social distancing is that I&#39;m now an @OpenJDK contributor! This patch saves 35% time on lookup of non-existing ZIP file entries: https://github.com/openjdk/jdk/commit/fc728278c2bc4af041f2ffa1fba54bcdc4c0e4e3 Thanks to @cl4es for awesome help and sponsoring!</p>&mdash; Eirik Bjørsnøs (@eirbjo)  
 
 TL;DR: we didn't settle for 35%.
 
@@ -162,7 +162,7 @@ compared to JDK 8.
 On the Spring PetClinic application, these improvements have improved startup time by 
 a few hundred milliseconds. Hopefully someone will appreciate that. :-)
 
-Big thanks to [@eirbjo](https://twitter.com/eirbjo) for a great collaboration! And to
+Big thanks to [@eirbjo](https://github.com/eirbjo) for a great collaboration! And to
 Lance Andersen, Volker Simonis and others who helped review the patches.
 
 (Hmm, now maybe [this RFE](https://bugs.openjdk.java.net/browse/JDK-8193066) that I filed years ago will be worth fixing...)

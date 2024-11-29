@@ -235,27 +235,27 @@ JDK mainline.
 
 ```
 Name                                    Change
-StringConcat.concat123String             0.87x (p = 0.000*)
-StringConcat.concat13String              1.39x (p = 0.000*)
-StringConcat.concat23String              0.85x (p = 0.000*)
-StringConcat.concat23StringConst         0.91x (p = 0.000*)
-StringConcat.concat4String               1.43x (p = 0.000*)
-StringConcat.concat6String               1.56x (p = 0.000*)
-StringConcat.concatConst2String          1.64x (p = 0.000*)
-StringConcat.concatConst4String          1.73x (p = 0.000*)
-StringConcat.concatConst6Object          1.72x (p = 0.000*)
-StringConcat.concatConst6String          1.74x (p = 0.000*)
-StringConcat.concatConstBoolByte         2.69x (p = 0.000*)
-StringConcat.concatConstInt              1.62x (p = 0.000*)
-StringConcat.concatConstIntConstInt      1.62x (p = 0.000*)
-StringConcat.concatConstString           1.33x (p = 0.000*)
-StringConcat.concatConstStringConstInt   1.68x (p = 0.000*)
-StringConcat.concatEmptyConstInt         1.15x (p = 0.000*)
-StringConcat.concatEmptyConstString      2.40x (p = 0.000*)
-StringConcat.concatEmptyLeft             3.02x (p = 0.000*)
-StringConcat.concatEmptyRight            2.98x (p = 0.000*)
-StringConcat.concatMethodConstString     1.00x (p = 0.339 )
-StringConcat.concatMix4String            1.47x (p = 0.000*)
+StringConcat.concat123String             0,87x (p = 0.000*)
+StringConcat.concat13String              1,39x (p = 0.000*)
+StringConcat.concat23String              0,85x (p = 0.000*)
+StringConcat.concat23StringConst         0,91x (p = 0.000*)
+StringConcat.concat4String               1,43x (p = 0.000*)
+StringConcat.concat6String               1,56x (p = 0.000*)
+StringConcat.concatConst2String          1,64x (p = 0.000*)
+StringConcat.concatConst4String          1,73x (p = 0.000*)
+StringConcat.concatConst6Object          1,72x (p = 0.000*)
+StringConcat.concatConst6String          1,74x (p = 0.000*)
+StringConcat.concatConstBoolByte         2,69x (p = 0.000*)
+StringConcat.concatConstInt              1,62x (p = 0.000*)
+StringConcat.concatConstIntConstInt      1,62x (p = 0.000*)
+StringConcat.concatConstString           1,33x (p = 0.000*)
+StringConcat.concatConstStringConstInt   1,68x (p = 0.000*)
+StringConcat.concatEmptyConstInt         1,15x (p = 0.000*)
+StringConcat.concatEmptyConstString      2,40x (p = 0.000*)
+StringConcat.concatEmptyLeft             3,02x (p = 0.000*)
+StringConcat.concatEmptyRight            2,98x (p = 0.000*)
+StringConcat.concatMethodConstString     1,00x (p = 0.339 )
+StringConcat.concatMix4String            1,47x (p = 0.000*)
 ```
 ```mermaid
 ---
@@ -692,3 +692,30 @@ at lower deployment and warmup cost.
 
 A hybrid approach where we generate as few classes as possible by leveraging `MethodHandles` for things that it's good at,
 such as filtering and adapting arguments, will end up being the best overall implementation.
+                         
+```
+
+
+                           Cnt     Base     Error      Test    Error  Unit  Change
+concat123String             15 1115,249 ±  47,949  1117,600 ± 63,910 ns/op   1,00x (p = 0,904 )
+concat13String              15   47,661 ±   0,411    47,305 ±  1,359 ns/op   1,01x (p = 0,314 )
+concat13StringConst         15   75,703 ±   3,654    68,695 ±  0,421 ns/op   1,10x (p = 0,000*)
+concat23String              15  145,045 ±   1,407   144,934 ±  3,178 ns/op   1,00x (p = 0,897 )
+concat23StringConst         15  124,363 ±   1,247   125,227 ±  5,216 ns/op   0,99x (p = 0,514 )
+concat30Mix                 15  358,019 ±  19,446   344,140 ±  7,561 ns/op   1,04x (p = 0,013 )
+concat3String               15   13,540 ±   0,693    16,308 ±  0,740 ns/op   0,83x (p = 0,000*)
+concat4String               15   16,193 ±   0,731    25,779 ±  1,276 ns/op   0,63x (p = 0,000*)
+concat6String               15   21,549 ±   0,954    20,055 ±  0,425 ns/op   1,07x (p = 0,000*)
+concatConst2String          15   11,599 ±   0,889     8,549 ±  0,221 ns/op   1,36x (p = 0,000*)
+concatConst4String          15   16,871 ±   0,861    25,449 ±  0,771 ns/op   0,66x (p = 0,000*)
+concatConst6Object          15   58,020 ±   2,317    52,429 ±  1,515 ns/op   1,11x (p = 0,000*)
+concatConst6String          15   21,050 ±   0,939    20,368 ±  1,163 ns/op   1,03x (p = 0,070 )
+concatConstBool             15    3,832 ±   0,038     3,842 ±  0,115 ns/op   1,00x (p = 0,734 )
+concatConstString           15    5,362 ±   0,044     5,453 ±  0,359 ns/op   0,98x (p = 0,316 )
+concatConstStringConst      15    8,799 ±   0,310     6,668 ±  0,212 ns/op   1,32x (p = 0,000*)
+concatConstStringConstInt   15   13,411 ±   1,395    29,877 ±  1,989 ns/op   0,45x (p = 0,000*)
+concatEmptyRight            15    2,483 ±   0,132     2,513 ±  0,095 ns/op   0,99x (p = 0,451 )
+concatMethodConstString     15    5,582 ±   0,357     5,393 ±  0,186 ns/op   1,04x (p = 0,064 )
+concatMix4String            15   93,714 ±   5,203    80,934 ±  2,970 ns/op   1,16x (p = 0,000*)
+concatStringBoolString      15   22,164 ±   1,641     8,943 ±  0,309 ns/op   2,48x (p = 0,000*)
+````

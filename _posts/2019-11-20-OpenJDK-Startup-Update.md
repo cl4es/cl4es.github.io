@@ -79,13 +79,9 @@ Who knows... :-)
 
 I'll continue paying close attention to how well OpenJDK performs during startup/warmup, regardless of whether it's for highly tuned and specialized use cases, or just to run those builds and tests a bit faster.
 
-### Moar!
+### More
 
-I did a talk on some of this and some related stuff recently:
-
-<blockquote class="twitter-tweet"><p lang="in" dir="ltr">.<a href="https://twitter.com/javazone?ref_src=twsrc%5Etfw">@javazone</a> The lean, mean... OpenJDK? <a href="https://t.co/jdPoQ2jJrH">https://t.co/jdPoQ2jJrH</a></p>&mdash; Claes Redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1172147472501751812?ref_src=twsrc%5Etfw">September 12, 2019</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
-
-Slides [here](http://cr.openjdk.java.net/~redestad/slides/lean_mean_openjdk.pdf).
+I did a talk on some of this and some related stuff at JavaZone. Slides [here](http://cr.openjdk.java.net/~redestad/slides/lean_mean_openjdk.pdf).
 
 #### Edits
 

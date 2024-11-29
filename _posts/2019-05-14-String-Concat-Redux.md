@@ -13,8 +13,9 @@ Let me know if something is particularly unclear, or worse, wrong.
 
 ### TL;DR
 
-<blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr">I might be way too excited about this, but it seems I have turned an exponential factor into a constant one... <a href="https://t.co/RPzOnDundN">https://t.co/RPzOnDundN</a></p>&mdash; redestad (@cl4es) <a href="https://twitter.com/cl4es/status/1120647321992204288?ref_src=twsrc%5Etfw">23 april 2019</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+I turned an exponential factor into a constant one... 
+
+<a href="https://mail.openjdk.org/pipermail/core-libs-dev/2019-April/059822.html">RFR: 8222852: Reduce String concat combinator tree shapes by folding constants into prependers</a>
 
 ### Joining Strings
 

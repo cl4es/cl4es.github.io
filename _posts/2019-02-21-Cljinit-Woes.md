@@ -9,14 +9,11 @@ tags:
 Earlier this week it was pointed out to me that the latest JDK updates (8u202/11.0.2)
 has a rather large startup/performance issue when running Clojure in certain modes.
 
-<blockquote class="twitter-tweet" data-lang="sv"><p lang="en" dir="ltr"><a href="https://twitter.com/cl4es?ref_src=twsrc%5Etfw">@cl4es</a>  <a href="https://t.co/3sGSA1PmFF">https://t.co/3sGSA1PmFF</a>  I have a potential fix in Clojure but oooof!</p>&mdash; Ghadi Shayban (@smashthepast) <a href="https://twitter.com/smashthepast/status/1097557132566773760?ref_src=twsrc%5Etfw">18 februari 2019</a></blockquote>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-
 Others were reporting [similar issues](https://bugs.openjdk.java.net/browse/JDK-8219233), and all seemed to be related to Clojure and startup. We tried narrowing down the slowdown to something simpler with some success, and identified a few bottlenecks.
 
 The root issue is a security-sensitive class initialization bug fix that ensures static methods aren't marked as resolved until the class has been fully initialized.
 
-The manifestation of the issue in clojure seems more complex than our simple reproducers suggested, but with some assistance from [Ghadi Shayban](https://twitter.com/smashthepast) along with ample help from David Holmes and [Vladimir Ivanov](https://twitter.com/iwan0www/) we now have a pretty good picture of what's going on.
+The manifestation of the issue in clojure seems more complex than our simple reproducers suggested, but with some assistance from Ghadi Shayban, along with ample help from David Holmes and Vladimir Ivanov we now have a pretty good picture of what's going on.
 
 I'll reason about the issues using Java code. Sorry. :-)
 
